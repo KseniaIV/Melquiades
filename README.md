@@ -10,12 +10,12 @@ Melquiades is the second iteration of my favorite pet project.
 
 The original version was a very lean core workbench with a starter database of snippets. I wanted a flexible tool that I could rearrange for different needs — small custom timers, widgets, UI samples. My long-term goal was always to be able to develop and deploy within the IDE itself.
 
-As a DevOps engineer, I find a lot lacking in most orchestration tools I use, as well as in the marketplace-driven focus of proprietary IDEs. I think an IDE should adapt to the individual — to personality and task. This project follows the same idea, but applied to AI-assisted development.
+As a DevOps engineer, I like to meditate about orchestration tools. I think an IDE should adapt to the individual — to personality and task. This project follows the same idea, but applied to AI-assisted development.
 
-When I work with AI, I benefit most from its reflections and its ability to visualize structure. So I added features where it suggests follow-up questions and can turn a snippet into a mind map.
+I think LLMs are useful for reflection and rapid visualization of structures. They can quickly render ideas — like generating a JSON map of a conversation. My tool leverages that by providing a fast path from request to visual structure, enabling quick iteration.
 
-This version keeps that spirit, but adds something I care about personally:  
-working with tools without giving up control. I want something that helps me think, break things down, and suggest directions — while I stay close enough to understand every piece so I can reuse it later.
+This version embodies my main personal interest:  
+working with tools without giving up control. I want something that helps break things down, and suggest alternatives — while I stay close enough to understand every piece so I can reuse it later.
 
 ---
 
