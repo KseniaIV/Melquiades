@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Melquíades — Demo</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0d0d14; --bg2: #13131e; --bg3: #1a1a28;
+  --border: #2a2a3e; --accent: #7c6af7; --teal: #4ecdc4;
+  --text: #d4d4e8; --muted: #555566; --danger: #e06a6a;
+}
+body { background: var(--bg); color: var(--text); font: 13px/1.5 system-ui,sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+/* header */
+header { display: flex; align-items: center; gap: 12px; padding: 8px 16px; background: var(--bg2); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+header h1 { font-size: 14px; font-weight: 600; color: var(--accent); }
+.chain { font-size: 11px; color: var(--muted); flex: 1; }
+.chain .done { color: var(--teal); }
+.ai-label { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--teal); }
+.ai-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--teal); }
+
+/* layout */
+main { display: grid; grid-template-columns: 200px 1fr 280px; flex: 1; overflow: hidden; }
+.col { display: flex; flex-direction: column; border-right: 1px solid var(--border); overflow: hidden; }
+.col:last-child { border-right: none; }
+.col-header { padding: 8px 12px; font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+
+/* snippet list */
+.snip-item { display: flex; align-items: center; gap: 8px; padding: 7px 12px; cursor: pointer; border-left: 2px solid transparent; }
+.snip-item:hover  { background: var(--bg3); }
+.snip-item.active { background: var(--bg3); border-left-color: var(--accent); }
+.snip-dot  { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
+.snip-dot.reg { background: var(--teal); }
+.snip-name { font-size: 12px; flex: 1; }
+.snip-lang { font-size: 9px; color: var(--muted); background: var(--bg3); border: 1px solid var(--border); padding: 1px 4px; border-radius: 2px; }
+.snip-tags { font-size: 9px; color: var(--accent); opacity: .7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60px; }
+.tags-row { display: flex; align-items: center; gap: 6px; padding: 4px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.tags-row input { flex:1; background: transparent; border: none; color: var(--muted); font: 11px/1.4 system-ui; outline: none; }
+.tags-row input::placeholder { color: var(--border); }
+
+/* tabs */
+.tabs { display: flex; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.tab  { padding: 7px 14px; font-size: 12px; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent; }
+.tab.active { color: var(--text); border-bottom-color: var(--accent); }
+.tab:hover:not(.active) { color: var(--text); }
+
+/* screens */
+.screen { flex: 1; display: none; flex-direction: column; overflow: hidden; }
+.screen.active { display: flex; }
+.meta-row { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.meta-title { font-size: 13px; font-weight: 500; flex: 1; }
+.badge { font-size: 9px; color: var(--muted); background: var(--bg3); border: 1px solid var(--border); padding: 2px 6px; border-radius: 3px; }
+textarea { flex: 1; background: var(--bg2); border: none; color: var(--text); font: 12px/1.6 'Cascadia Code','Fira Code',monospace; padding: 12px; resize: none; outline: none; }
+.gen-label { padding: 4px 12px; font-size: 10px; color: var(--teal); background: #0a1a0a; border-top: 1px solid var(--border); flex-shrink: 0; display: none; }
+.actions { display: flex; gap: 6px; padding: 8px 12px; border-top: 1px solid var(--border); flex-shrink: 0; align-items: center; }
+
+/* run screen */
+#sandbox { flex: 1; border: none; background: #fff; min-height: 0; }
+.log-area { height: 130px; overflow-y: auto; background: #080810; border-top: 1px solid var(--border); padding: 6px 10px; font: 11px/1.6 'Cascadia Code','Fira Code',monospace; flex-shrink: 0; }
+.log-line        { color: #555; }
+.log-line.action { color: var(--teal); }
+.log-line.output { color: var(--text); }
+.log-line.error  { color: var(--danger); }
+
+/* buttons */
+.btn { padding: 5px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: 500; transition: opacity .15s; border: none; }
+.btn:hover { opacity: .8; }
+.btn-accent  { background: var(--bg3); color: var(--accent); border: 1px solid var(--accent); }
+.btn-plain   { background: var(--bg3); color: var(--text);   border: 1px solid var(--border); }
+.btn-teal    { background: var(--bg3); color: var(--teal);   border: 1px solid var(--teal); }
+.btn-suggest { background: var(--bg3); color: #a47ac8; border: 1px solid #4a3a6e; font-size: 11px; margin-left: auto; }
+
+/* panels col */
+.panels-area { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 10px; }
+.panel-card  { border: 1px solid var(--border); border-radius: 5px; overflow: hidden; flex-shrink: 0; }
+.panel-card-hdr { display: flex; align-items: center; padding: 5px 10px; background: var(--bg3); border-bottom: 1px solid var(--border); }
+.panel-card-hdr span:first-child { font-size: 11px; flex: 1; color: var(--muted); }
+.panel-card-hdr .x { font-size: 11px; cursor: pointer; color: var(--muted); }
+.panel-card-hdr .x:hover { color: var(--text); }
+.panel-card iframe { display: block; width: 100%; height: 180px; border: none; }
+.empty-msg { color: var(--muted); font-size: 11px; text-align: center; padding: 24px 16px; line-height: 1.8; }
+
+/* AI sidebar */
+.ai-sidebar { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+.ai-section { padding: 10px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.ai-section.grow { flex: 1; display: flex; flex-direction: column; }
+.ai-section-title { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
+.ai-actions { display: flex; flex-direction: column; gap: 5px; }
+.ai-output { background: var(--bg3); border-radius: 4px; padding: 8px 10px; font-size: 11px; color: var(--muted); min-height: 44px; font-style: italic; line-height: 1.6; word-break: break-word; }
+.ai-output.live { color: var(--text); font-style: normal; }
+.chip-list { display: flex; flex-wrap: wrap; gap: 5px; }
+.chip { background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; padding: 3px 9px; font-size: 11px; cursor: pointer; }
+.chip:hover { border-color: var(--accent); color: var(--accent); }
+.reflect-item { font-size: 11px; padding: 3px 0; display: flex; gap: 6px; color: var(--text); line-height: 1.5; }
+.reflect-item::before { content: '▸'; color: var(--accent); flex-shrink: 0; }
+.btn-sm { padding: 2px 8px; font-size: 10px; }
+
+/* footer */
+footer { display: flex; align-items: center; gap: 8px; padding: 6px 14px; background: var(--bg2); border-top: 1px solid var(--border); flex-shrink: 0; overflow-x: auto; }
+.footer-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; }
+.registry-item { font-size: 11px; color: var(--accent); background: var(--bg3); border: 1px solid var(--border); padding: 2px 6px; border-radius: 3px; cursor: pointer; white-space: nowrap; }
+.registry-item:hover { border-color: var(--accent); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Melquíades</h1>
+  <div class="chain" id="chain"></div>
+  <div class="ai-label"><span class="ai-dot"></span> AI ready</div>
+</header>
+
+<main>
+  <!-- LEFT: snippet list -->
+  <div class="col">
+    <div class="col-header">Snippets</div>
+    <div class="tags-row">
+      <input type="text" placeholder="filter tags…" id="tag-filter">
+    </div>
+    <div id="snip-list"></div>
+  </div>
+
+  <!-- CENTER: editor -->
+  <div class="col">
+    <div class="col-header">Editor</div>
+    
+    <div class="tabs">
+      <div class="tab active" id="tab-prompt" onclick="switchTab('prompt')">Prompt</div>
+      <div class="tab" id="tab-snippet" onclick="switchTab('snippet')">Snippet</div>
+      <div class="tab" id="tab-run" onclick="switchTab('run')">Run</div>
+    </div>
+
+    <div id="screen-prompt" class="screen active">
+      <div class="meta-row">
+        <span class="meta-title" id="meta-title">Select a snippet</span>
+        <span class="badge" id="meta-lang">-</span>
+      </div>
+      <textarea id="body-prompt" placeholder="Write a prompt or note…"></textarea>
+      <div class="actions">
+        <button class="btn btn-accent" onclick="generate()">Generate ▸</button>
+        <button class="btn btn-plain" onclick="clearPrompt()">Clear</button>
+      </div>
+    </div>
+
+    <div id="screen-snippet" class="screen">
+      <div class="meta-row">
+        <span class="meta-title" id="meta-title-snip">-</span>
+        <span class="badge" id="meta-lang-snip">-</span>
+        <input type="text" id="meta-tags" placeholder="tags…" style="flex:0.3; background:var(--bg3); border:1px solid var(--border); color:var(--text); padding:2px 6px; border-radius:3px; font-size:11px;">
+      </div>
+      <textarea id="body-snippet" spellcheck="false" placeholder="Snippet code appears here…"></textarea>
+      <div class="gen-label" id="gen-label">✦ generated from <span id="gen-from"></span></div>
+      <div class="actions">
+        <button class="btn btn-teal"    onclick="execute()">Execute ▸</button>
+        <button class="btn btn-plain" onclick="save()">Save</button>
+        <button class="btn btn-plain" onclick="saveAs()">Save As</button>
+        <button class="btn btn-accent"  onclick="register()">Register</button>
+        <button class="btn btn-plain" id="btn-stop-gen" onclick="stopGenerate()" disabled style="color:#f87171">Stop ■</button>
+        <button class="btn btn-plain" onclick="deleteSnippet()" style="color:#f87171">Delete</button>
+        <button class="btn btn-plain" id="btn-mindmap" onclick="mindMap()">Mind map</button>
+        <button class="btn btn-suggest" id="btn-suggest" style="display:none" onclick="suggestNext()">Suggest next snippet</button>
+      </div>
+    </div>
+
+    <div id="screen-run" class="screen">
+      <iframe id="sandbox" sandbox="allow-scripts"></iframe>
+      <div class="log-area" id="log"></div>
+      <div class="actions">
+        <button class="btn btn-teal" onclick="execute()">Execute ▸</button>
+        <button class="btn btn-plain" onclick="stop()">Stop ■</button>
+        <button class="btn btn-plain" onclick="$('log').innerHTML=''">Clear log</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: AI sidebar -->
+  <div class="col">
+    <div class="col-header">🤖 Melquíades</div>
+    <div class="ai-sidebar">
+
+      <div class="ai-section">
+        <div class="ai-section-title">Actions</div>
+        <div class="ai-actions">
+          <button class="btn btn-accent" onclick="generate()">Generate ▸</button>
+          <button class="btn btn-plain"  onclick="decompose()">Decompose ▸</button>
+          <button class="btn btn-plain"  onclick="revise()">Revise</button>
+          <button class="btn btn-plain"  onclick="explain()">Explain</button>
+        </div>
+      </div>
+
+      <div class="ai-section">
+        <div class="ai-section-title">Output</div>
+        <div class="ai-output" id="ai-output">Waiting for action…</div>
+      </div>
+
+      <div class="ai-section">
+        <div class="ai-section-title">
+          Questions
+          <button class="btn btn-plain btn-sm" onclick="askQuestions()">Ask</button>
+        </div>
+        <div class="chip-list" id="chip-list">
+          <div class="chip" onclick="clickChip(this.textContent)">What are the failure modes?</div>
+          <div class="chip" onclick="clickChip(this.textContent)">What should chain next?</div>
+          <div class="chip" onclick="clickChip(this.textContent)">How would you test this?</div>
+        </div>
+      </div>
+
+      <div class="ai-section">
+        <div class="ai-section-title">
+          Reflection
+          <button class="btn btn-plain btn-sm" onclick="reflect()">Reflect</button>
+        </div>
+        <div id="reflection-list">
+          <div class="reflect-item">No error handling on exec calls</div>
+          <div class="reflect-item">Mock actions not confirmed before destructive ops</div>
+        </div>
+      </div>
+
+      <div class="ai-section grow">
+        <div class="ai-section-title">Registered Panels</div>
+        <div class="panels-area" id="panels-area">
+          <div class="empty-msg">Register a snippet to add it here as a live panel.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<footer>
+  <span class="footer-label">Registry</span>
+  <div id="registry-bar"></div>
+  <span id="registry-empty" style="font-size:11px;color:#333">— no registered snippets yet</span>
+</footer>
+
+<script>
+const SNIPPETS = {
+  'sample-json':      { lang:'json',  tags:['data','example'],   body:()=>JSON.stringify({
+    "name": "Sample API Response",
+    "version": "1.0",
+    "users": [
+      {"id": 1, "name": "Alice", "role": "admin"},
+      {"id": 2, "name": "Bob", "role": "user"}
+    ],
+    "metadata": {
+      "total": 2,
+      "page": 1,
+      "timestamp": new Date().toISOString()
+    }
+  }, null, 2) },
+  'castle-structure':  { lang:'json',  tags:['complex','nested'],  body:()=>JSON.stringify({
+    "castle": {
+      "name": "Castle Name",
+      "rooms": [
+        {
+          "id": "living_room",
+          "label": "Living Room",
+          "color": "#79c0ff"
+        },
+        {
+          "id": "kitchen",
+          "label": "Kitchen",
+          "color": "#ff7b72"
+        },
+        {
+          "id": "dining_room",
+          "label": "Dining Room",
+          "color": "#58a6ff",
+          "rooms": [
+            {
+              "id": "pantry",
+              "label": "Pantry",
+              "color": "#ff7b72"
+            },
+            {
+              "id": "butler_pantry",
+              "label": "Butler Pantry",
+              "color": "#58a6ff"
+            }
+          ]
+        },
+        {
+          "id": "library",
+          "label": "Library",
+          "color": "#79c0ff"
+        }
+      ]
+    }
+  }, null, 2) },
+}
+
+const state = { current:null, currentId:null, registered:{}, generatedFrom:null, generating:false, abortCtrl:null, lastHtml:'' }
+const $ = id => document.getElementById(id)
+const srcdoc = html => `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>${html}</body></html>`
+
+function buildList() {
+  const el = $('snip-list')
+  el.innerHTML = ''
+  Object.keys(SNIPPETS).forEach(name => {
+    const d = document.createElement('div')
+    d.className = 'snip-item'; d.id = `item-${name}`
+    const t = (SNIPPETS[name].tags||[]).join(' ')
+    d.innerHTML = `<span class="snip-dot" id="dot-${name}"></span><span class="snip-name">${name}</span><span class="snip-lang">${SNIPPETS[name].lang}</span>${t ? `<span class="snip-tags">${t}</span>` : ''}`
+    d.onclick = () => selectSnippet(name)
+    el.appendChild(d)
+  })
+}
+
+function selectSnippet(name) {
+  document.querySelectorAll('.snip-item').forEach(i => i.classList.remove('active'))
+  $(`item-${name}`).classList.add('active')
+  $('meta-title').textContent = name
+  $('meta-lang').textContent  = SNIPPETS[name].lang
+  state.current = name; state.currentId = SNIPPETS[name].id || null; state.generatedFrom = null
+  $('body-prompt').value  = SNIPPETS[name].body()
+  $('body-snippet').value = SNIPPETS[name].body()
+  $('meta-tags').value = (SNIPPETS[name].tags || []).join(', ')
+  $('gen-label').style.display   = 'none'
+  $('btn-suggest').style.display = 'none'
+  
+  // Update mindmap button for JSON snippets
+  const btnMindmap = $('btn-mindmap')
+  if (SNIPPETS[name].lang === 'json') {
+    btnMindmap.textContent = '📊 JSON Mind map'
+    btnMindmap.style.color = '#79c0ff'
+    btnMindmap.style.borderColor = '#79c0ff'
+  } else {
+    btnMindmap.textContent = 'Mind map'
+    btnMindmap.style.color = ''
+    btnMindmap.style.borderColor = ''
+  }
+  
+  SNIPPETS[name].lang === 'prompt' ? switchTab('prompt') : switchTab('snippet')
+  setChain([name])
+}
+
+function switchTab(t) {
+  ['prompt','snippet','run'].forEach(id => {
+    $(`tab-${id}`).classList.toggle('active', id === t)
+    $(`screen-${id}`).classList.toggle('active', id === t)
+  })
+}
+
+function setChain(steps) {
+  $('chain').innerHTML = steps.map((s,i) =>
+    i < steps.length-1 ? `<span class="done">${s}</span> → ` : `<span>${s}</span>`
+  ).join('')
+}
+
+function clearPrompt() {
+  $('body-prompt').value = ''
+  $('ai-output').textContent = 'Prompt cleared'
+}
+
+function save() {
+  if (!state.current) { appendLog('no snippet selected','error'); return }
+  SNIPPETS[state.current].body = () => $('body-snippet').value.trim()
+  appendLog(`[save] ${state.current}`,'action')
+}
+
+function saveAs() {
+  const name = prompt('New snippet name:')
+  if (!name) return
+  SNIPPETS[name] = {
+    lang: $('meta-lang').textContent,
+    tags: $('meta-tags').value.split(',').map(s=>s.trim()).filter(Boolean),
+    body: () => $('body-snippet').value.trim()
+  }
+  buildList()
+  selectSnippet(name)
+  appendLog(`[save-as] ${name}`,'action')
+}
+
+function register() {
+  if (!state.current) { appendLog('no snippet selected','error'); return }
+  state.registered[state.current] = true
+  updateRegistry()
+  appendLog(`[register] ${state.current}`,'action')
+}
+
+function deleteSnippet() {
+  if (!state.current) return
+  if (!confirm(`Delete "${state.current}"?`)) return
+  delete SNIPPETS[state.current]
+  delete state.registered[state.current]
+  buildList()
+  updateRegistry()
+  state.current = null
+  $('body-prompt').value = ''
+  $('body-snippet').value = ''
+  switchTab('prompt')
+  appendLog(`[delete] snippet removed`,'action')
+}
+
+function updateRegistry() {
+  const bar = $('registry-bar')
+  const names = Object.keys(state.registered)
+  if (names.length) {
+    bar.innerHTML = names.map(name => `<span class="registry-item">${name}</span>`).join('')
+    $('registry-empty').style.display = 'none'
+  } else {
+    bar.innerHTML = ''
+    $('registry-empty').style.display = 'inline'
+  }
+}
+
+function execute() {
+  const code = $('body-snippet').value.trim()
+  if (!code) { appendLog('no code to execute','error'); return }
+  const lang = $('meta-lang').textContent
+  runCode(code, lang, state.current || 'unnamed')
+  switchTab('run')
+}
+
+function runCode(code, lang, name) {
+  const isFullDoc = code.trimStart().toLowerCase().startsWith('<!doctype') || code.trimStart().toLowerCase().startsWith('<html')
+  if (lang === 'css') {
+    if (state.lastHtml) {
+      state.lastHtml = injectIntoHtml(state.lastHtml, 'css', code)
+      $('sandbox').srcdoc = state.lastHtml
+      appendLog(`[execute] ${name} — CSS injected`,'action')
+    } else {
+      const demo = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>\n${code}\n</style></head><body><h1>Heading</h1><h2>Subheading</h2><p>Paragraph text. <a href="#">A link</a>.</p><ul><li>Item one</li><li>Item two</li></ul><button>Button</button><input placeholder="Input"></body></html>`
+      state.lastHtml = demo; $('sandbox').srcdoc = demo
+      appendLog(`[execute] ${name} — CSS preview`,'action')
+    }
+  } else if (lang === 'js') {
+    if (state.lastHtml) {
+      state.lastHtml = injectIntoHtml(state.lastHtml, 'js', code)
+      $('sandbox').srcdoc = state.lastHtml
+      appendLog(`[execute] ${name} — JS injected`,'action')
+    } else {
+      $('sandbox').srcdoc = srcdoc(`<script>\n${code}\n<\/script>`)
+      appendLog(`[execute] ${name} — JS standalone`,'action')
+    }
+  } else {
+    state.lastHtml = isFullDoc ? code : srcdoc(code)
+    $('sandbox').srcdoc = state.lastHtml
+    appendLog(`[execute] ${name} — done`,'action')
+  }
+}
+
+function injectIntoHtml(base, tag, code) {
+  if (tag === 'css') {
+    const style = `<style>\n${code}\n</style>`
+    const hi = base.lastIndexOf('</head>')
+    if (hi !== -1) return base.slice(0, hi) + style + base.slice(hi)
+    const bi = base.lastIndexOf('<body')
+    if (bi !== -1) return base.slice(0, bi) + style + base.slice(bi)
+    return style + base
+  }
+  if (tag === 'js') {
+    const script = `<script>\n${code}\n<\/script>`
+    const i = base.lastIndexOf('</body>')
+    if (i !== -1) return base.slice(0, i) + script + base.slice(i)
+    return base + script
+  }
+  return base
+}
+
+function stop() {
+  $('sandbox').srcdoc = '<!DOCTYPE html><html><body></body></html>'
+  state.lastHtml = ''
+  appendLog('[stop] sandbox cleared','action')
+}
+
+function appendLog(msg, type = '') {
+  const log = $('log')
+  const line = document.createElement('div')
+  line.className = `log-line ${type}`
+  line.textContent = msg
+  log.appendChild(line)
+  log.scrollTop = log.scrollHeight
+}
+
+// AI Functions
+async function generate() {
+  const raw = $('body-prompt').value.trim()
+  if (!raw) { appendLog('prompt is empty','error'); return }
+  
+  switchTab('snippet')
+  const ta = $('body-snippet')
+  state.prevSnippet = ta.value
+  ta.value = ''
+  appendLog('[generate] calling /api/ai/generate…','action')
+  state.generating = true; state.abortCtrl = new AbortController()
+  $('btn-stop-gen').disabled = false
+
+  let resp
+  try {
+    resp = await fetch('/api/ai/generate', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({prompt: raw}),
+      signal: state.abortCtrl.signal
+    })
+  } catch (e) {
+    if (e.name === 'AbortError') { appendLog('[generate] stopped','action') }
+    else { appendLog(`[generate] fetch error: ${e.message}`,'error') }
+    state.generating = false; $('btn-stop-gen').disabled = true; return
+  }
+
+  if (!resp.ok) { appendLog(`[generate] ${resp.status} ${resp.statusText}`,'error'); state.generating = false; $('btn-stop-gen').disabled = true; return }
+
+  const reader = resp.body.getReader(), dec = new TextDecoder()
+  let buf = ''
+  try {
+    while (true) {
+      const {done, value} = await reader.read()
+      if (done) break
+      buf += dec.decode(value, {stream: true})
+      const lines = buf.split('\n'); buf = lines.pop()
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue
+        const payload = line.slice(6)
+        if (payload === '[DONE]') { finishGenerate(state.current); return }
+        try {
+          const token = JSON.parse(payload)?.choices?.[0]?.delta?.content
+          if (token) { ta.value += token; ta.scrollTop = ta.scrollHeight }
+        } catch (_) {}
+      }
+    }
+  } catch (e) {
+    if (e.name !== 'AbortError') appendLog(`[generate] stream error: ${e.message}`,'error')
+    else appendLog('[generate] stopped','action')
+    state.generating = false; $('btn-stop-gen').disabled = true; return
+  }
+  finishGenerate(state.current)
+}
+
+function stopGenerate() {
+  state.abortCtrl?.abort()
+  state.generating = false
+  $('btn-stop-gen').disabled = true
+  if (state.prevSnippet && !$('body-snippet').value.trim()) {
+    $('body-snippet').value = state.prevSnippet
+    appendLog('[generate] stopped · snippet restored','action')
+  }
+}
+
+function finishGenerate(src) {
+  state.generating = false; $('btn-stop-gen').disabled = true
+  state.generatedFrom = src
+  $('gen-label').style.display   = 'block'; $('gen-from').textContent = src
+  $('btn-suggest').style.display = 'block'
+  appendLog('[generate] done','action')
+  setChain([src, 'generated ✓'])
+}
+
+function buildJSONMindMap(data, rootKey = "JSON") {
+  if (data === null || data === undefined) {
+    return {
+      root: rootKey,
+      branches: [{
+        id: 'null_value',
+        label: 'null/undefined',
+        color: "#ff7b72",
+        tip: 'Data is null or undefined',
+        leaves: []
+      }]
+    }
+  }
+  
+  function processNode(obj, key, path = "") {
+    const branches = []
+    const leaves = []
+    
+    if (typeof obj === 'object' && obj !== null) {
+      if (Array.isArray(obj)) {
+        branches.push({
+          id: `array_${path.replace(/\./g, '_')}`,
+          label: `${key} [${obj.length}]`,
+          color: "#d2a8ff",
+          tip: `Array with ${obj.length} items`,
+          leaves: obj.slice(0, 3).map((item, i) => ({
+            id: `item_${path.replace(/\./g, '_')}_${i}`,
+            label: `Item ${i + 1}`,
+            tip: typeof item === 'object' ? JSON.stringify(item).substring(0, 50) + '...' : String(item)
+          }))
+        })
+        
+        obj.slice(0, 3).forEach((item, i) => {
+          if (typeof item === 'object' && item !== null) {
+            const nested = processNode(item, `Item ${i + 1}`, `${path}.${i}`)
+            branches.push(...nested.branches)
+          }
+        })
+      } else {
+        const entries = Object.entries(obj)
+        branches.push({
+          id: `obj_${path.replace(/\./g, '_')}`,
+          label: `${key} {${entries.length}}`,
+          color: "#79c0ff",
+          tip: `Object with ${entries.length} properties`,
+          leaves: entries.slice(0, 4).map(([k, v]) => ({
+            id: `prop_${path.replace(/\./g, '_')}_${k}`,
+            label: k,
+            tip: `${k}: ${typeof v} ${Array.isArray(v) ? `[${v.length}]` : typeof v === 'object' ? `{...}` : String(v).substring(0, 30)}`
+          }))
+        })
+        
+        entries.slice(0, 3).forEach(([k, v]) => {
+          if (typeof v === 'object' && v !== null && !Array.isArray(v)) {
+            const nested = processNode(v, k, `${path}.${k}`)
+            branches.push(...nested.branches)
+          }
+        })
+      }
+    } else {
+      leaves.push({
+        id: `value_${path.replace(/\./g, '_')}`,
+        label: `${key}: ${String(obj).substring(0, 20)}`,
+        tip: `${key}: ${typeof obj} = ${String(obj)}`
+      })
+    }
+    
+    return { branches, leaves }
+  }
+  
+  const result = processNode(data, rootKey)
+  const branches = result.branches.slice(0, 6)
+  
+  if (branches.length === 0) {
+    branches.push({
+      id: 'single_value',
+      label: `${rootKey}`,
+      color: "#79c0ff",
+      tip: 'Single value',
+      leaves: result.leaves || []
+    })
+  }
+  
+  return {
+    root: rootKey,
+    branches: branches
+  }
+}
+
+function buildMindMapHTML(data) {
+  const d = JSON.stringify(data).replace(/<\/script>/gi, '<\\/script>')
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d1117;font-family:system-ui;overflow:hidden;user-select:none}
+svg{display:block}
+.edge{fill:none;stroke-width:2;opacity:.4}
+.node{cursor:pointer}
+.node:hover .pb{stroke-width:3}
+.lbl{pointer-events:none;text-anchor:middle;dominant-baseline:central;font-weight:600;fill:#fff}
+#tt{position:fixed;background:#161b22;border:1px solid #30363d;border-radius:8px;padding:10px 14px;color:#c9d1d9;font-size:12px;max-width:260px;line-height:1.6;pointer-events:none;display:none;z-index:20;box-shadow:0 8px 24px #0008}
+.tip-title{font-size:13px;font-weight:700;margin-bottom:4px}
+</style></head><body>
+<svg id="map" style="width:100vw;height:100vh"></svg>
+<div id="tt"></div>
+<script>
+const DATA=${d}
+const VW=1800,VH=1200,VCX=900,VCY=600,BR=460,LR=240
+const svg=document.getElementById('map'),NS='http://www.w3.org/2000/svg',tt=document.getElementById('tt')
+const el=(t,a)=>{const e=document.createElementNS(NS,t);Object.entries(a).forEach(([k,v])=>e.setAttribute(k,v));return e}
+svg.setAttribute('viewBox','0 0 '+VW+' '+VH)
+svg.setAttribute('width',window.innerWidth)
+svg.setAttribute('height',window.innerHeight)
+const defs=el('defs',{})
+defs.innerHTML='<filter id="gl"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="sh" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="6" flood-color="#00000088"/></filter>'
+svg.appendChild(defs)
+const g=el('g',{id:'world'})
+svg.appendChild(g)
+const nodes=[{id:'root',kind:'root',label:DATA.root,x:VCX,y:VCY,color:'#58a6ff',tip:''}]
+const edges=[]
+const nb=DATA.branches.length
+DATA.branches.forEach((b,bi)=>{
+  const angle=bi*(2*Math.PI/nb)-Math.PI/2
+  const bx=VCX+Math.cos(angle)*BR,by=VCY+Math.sin(angle)*BR
+  nodes.push({id:b.id,kind:'branch',label:b.label,x:bx,y:by,color:b.color||'#79c0ff',tip:b.tip||''})
+  edges.push({x1:VCX,y1:VCY,x2:bx,y2:by,color:b.color||'#79c0ff'})
+  const nl=b.leaves.length
+  b.leaves.forEach((lf,li)=>{
+    const spread=Math.PI*.52
+    const la=angle+(li-(nl-1)/2)*(spread/Math.max(nl-1,1))
+    const lx=bx+Math.cos(la)*LR,ly=by+Math.sin(la)*LR
+    nodes.push({id:lf.id,kind:'leaf',label:lf.label,x:lx,y:ly,color:b.color||'#79c0ff',tip:lf.tip||''})
+    edges.push({x1:bx,y1:by,x2:lx,y2:ly,color:b.color||'#79c0ff'})
+  })
+})
+edges.forEach(e=>{
+  g.appendChild(el('path',{class:'edge',stroke:e.color,
+    d:'M'+e.x1+','+e.y1+' C'+((e.x1+e.x2)/2)+','+e.y1+' '+((e.x1+e.x2)/2)+','+e.y2+' '+e.x2+','+e.y2}))
+})
+nodes.forEach(n=>{
+  const ng=el('g',{class:'node',transform:'translate('+n.x+','+n.y+')'})
+  if(n.kind==='root'){
+    ng.appendChild(el('circle',{r:54,fill:n.color,stroke:'#ffffff33','stroke-width':2,filter:'url(#gl)'}))
+    const t=el('text',{class:'lbl','font-size':20});t.textContent=n.label.slice(0,14);ng.appendChild(t)
+  } else if(n.kind==='branch'){
+    ng.appendChild(el('rect',{class:'pill',x:-92,y:-23,width:184,height:46,rx:23,fill:n.color+'22',filter:'url(#sh)'}))
+    ng.appendChild(el('rect',{class:'pb',x:-92,y:-23,width:184,height:46,rx:23,fill:'none',stroke:n.color,'stroke-width':2}))
+    const t=el('text',{class:'lbl','font-size':15});t.textContent=n.label.slice(0,20);ng.appendChild(t)
+  } else {
+    ng.appendChild(el('rect',{class:'pill',x:-88,y:-19,width:176,height:38,rx:9,fill:'#161b22',filter:'url(#sh)'}))
+    ng.appendChild(el('rect',{class:'pb',x:-88,y:-19,width:176,height:38,rx:9,fill:'none',stroke:n.color+'99','stroke-width':1.5}))
+    const t=el('text',{class:'lbl','font-size':12});t.textContent=n.label.slice(0,24);ng.appendChild(t)
+  }
+  ng.addEventListener('mouseenter',()=>{
+    tt.innerHTML='<div class="tip-title" style="color:'+n.color+'">'+n.label+'</div>'+(n.tip||'').replace(/\\n/g,'<br>')
+    tt.style.display='block'
+  })
+  ng.addEventListener('mousemove',e=>{
+    tt.style.left=Math.min(e.clientX+16,window.innerWidth-280)+'px'
+    tt.style.top=Math.min(e.clientY+16,window.innerHeight-120)+'px'
+  })
+  ng.addEventListener('mouseleave',()=>{tt.style.display='none'})
+  g.appendChild(ng)
+})
+let zoom=Math.min(window.innerWidth/VW,window.innerHeight/VH),px=0,py=0,drag=false,lm={}
+const applyT=()=>g.setAttribute('transform','translate('+px+','+py+') scale('+zoom+')')
+applyT()
+svg.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.min(4,Math.max(.15,zoom*(e.deltaY<0?1.1:.91)));applyT()},{passive:false})
+svg.addEventListener('mousedown',e=>{drag=true;lm={x:e.clientX,y:e.clientY};svg.style.cursor='grabbing'})
+window.addEventListener('mouseup',()=>{drag=false;svg.style.cursor='default'})
+window.addEventListener('mousemove',e=>{
+  if(!drag)return
+  px+=(e.clientX-lm.x)/zoom*(VW/window.innerWidth)
+  py+=(e.clientY-lm.y)/zoom*(VH/window.innerHeight)
+  lm={x:e.clientX,y:e.clientY};applyT()
+})
+<\/script></body></html>`
+}
+
+async function mindMap() {
+  appendLog('[mind-map] Starting mindmap process…','action')
+  
+  const code = $('body-snippet').value.trim()
+  if (!code) { 
+    appendLog('[mind-map] ERROR: No code in snippet editor','error'); 
+    return 
+  }
+  
+  const lang = $('meta-lang').textContent
+  appendLog(`[mind-map] Language detected: ${lang}`,'action')
+  appendLog(`[mind-map] Code length: ${code.length} chars`,'action')
+  
+  if (lang === 'json') {
+    appendLog('[mind-map] Processing JSON directly…','action')
+    try {
+      const jsonData = JSON.parse(code)
+      appendLog(`[mind-map] ✓ JSON parsed successfully, type: ${typeof jsonData}`,'action')
+      
+      const mindMapData = buildJSONMindMap(jsonData, state.current || 'JSON')
+      appendLog(`[mind-map] ✓ Mindmap data created, branches: ${mindMapData.branches.length}`,'action')
+      
+      if (!mindMapData.root || !Array.isArray(mindMapData.branches)) {
+        throw new Error(`Invalid mindmap structure - root: ${mindMapData.root}, branches: ${typeof mindMapData.branches}`)
+      }
+      
+      const html = buildMindMapHTML(mindMapData)
+      appendLog(`[mind-map] ✓ HTML generated, length: ${html.length} chars`,'action')
+      
+      $('body-snippet').value = html
+      appendLog(`[mind-map] ✓ HTML placed in editor`,'action')
+      
+      execute()
+      appendLog(`[mind-map] ✓ Executed in sandbox`,'action')
+      
+      setChain([state.current, 'json-mind-map ✓'])
+      appendLog(`[mind-map] ✓ JSON mindmap complete!`,'action')
+      
+    } catch(e) { 
+      appendLog(`[mind-map] ✗ JSON ERROR: ${e.message}`,'error')
+      appendLog(`[mind-map] Debug - First 100 chars: ${code.substring(0, 100)}`,'action')
+      console.error('Mindmap error:', e)
+    }
+  } else {
+    appendLog('[mind-map] Processing with AI model…','action')
+    try {
+      const resp = await fetch('/api/ai/mindmap', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({prompt: code})
+      })
+      if (!resp.ok) throw new Error(`API error: ${resp.status} ${resp.statusText}`)
+      const data = await resp.json()
+      if (!data.branches?.length) { 
+        appendLog('[mind-map] ✗ No branches returned from AI','error'); 
+        return 
+      }
+      const html = buildMindMapHTML(data)
+      $('body-snippet').value = html
+      execute()
+      appendLog(`[mind-map] ✓ AI mindmap complete: ${data.branches.length} branches`,'action')
+      setChain([state.current, 'mind-map ✓'])
+    } catch(e) { 
+      appendLog(`[mind-map] ✗ AI ERROR: ${e.message}`,'error')
+      console.error('AI mindmap error:', e)
+    }
+  }
+}
+
+// Placeholder functions for other AI actions
+function decompose() { appendLog('[decompose] not implemented yet','action') }
+function revise() { appendLog('[revise] not implemented yet','action') }
+function explain() { appendLog('[explain] not implemented yet','action') }
+function askQuestions() { appendLog('[ask-questions] not implemented yet','action') }
+function clickChip(text) { appendLog(`[chip] ${text}`,'action') }
+function reflect() { appendLog('[reflect] not implemented yet','action') }
+function suggestNext() { appendLog('[suggest-next] not implemented yet','action') }
+
+// Initialize
+buildList()
+updateRegistry()
+</script>
+</body>
+</html>
