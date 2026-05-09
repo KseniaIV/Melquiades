@@ -30,8 +30,6 @@ main { display: grid; grid-template-columns: 200px 1fr 280px; flex: 1; overflow:
 .snip-item { display: flex; align-items: center; gap: 8px; padding: 7px 12px; cursor: pointer; border-left: 2px solid transparent; }
 .snip-item:hover  { background: var(--bg3); }
 .snip-item.active { background: var(--bg3); border-left-color: var(--accent); }
-.snip-dot  { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
-.snip-dot.reg { background: var(--teal); }
 .snip-name { font-size: 12px; flex: 1; }
 .snip-lang { font-size: 9px; color: var(--muted); background: var(--bg3); border: 1px solid var(--border); padding: 1px 4px; border-radius: 2px; }
 .snip-tags { font-size: 9px; color: var(--accent); opacity: .7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60px; }
@@ -98,56 +96,265 @@ textarea { flex: 1; background: var(--bg2); border: none; color: var(--text); fo
 
 /* footer */
 footer { display: flex; align-items: center; gap: 8px; padding: 6px 14px; background: var(--bg2); border-top: 1px solid var(--border); flex-shrink: 0; overflow-x: auto; }
-.footer-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; }
-.registry-item { font-size: 11px; color: var(--accent); background: var(--bg3); border: 1px solid var(--border); padding: 2px 6px; border-radius: 3px; cursor: pointer; white-space: nowrap; }
-.registry-item:hover { border-color: var(--accent); }
+.footer-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; white-space: nowrap; }
+.reg-pill { padding: 3px 10px; background: var(--bg3); border: 1px solid var(--border); border-radius: 3px; font-size: 11px; cursor: pointer; white-space: nowrap; }
+.reg-pill:hover { border-color: var(--teal); color: var(--teal); }
 </style>
 </head>
 <body>
+
+<!-- snippet sources — plain text, inspectable in source, no hidden magic -->
+<script type="text/plain" id="src-deploy-prompt">
+Create a deployment control panel with four action buttons:
+- Check K8s Status
+- Mock Deploy Dev
+- Mock Rollback
+- Git Push Dry Run
+
+Each button calls the melquiades exec bridge with the action name.
+</script>
+
+<script type="text/plain" id="src-deploy-panel">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#0d0d14; color:#d4d4e8; font-family:system-ui; padding:16px; display:flex; flex-direction:column; gap:8px; }
+.lbl { font-size:10px; color:#555566; text-transform:uppercase; letter-spacing:2px; margin-bottom:4px; }
+button { padding:8px 14px; background:#1a1a28; border:1px solid #2a2a3e; color:#d4d4e8; border-radius:4px; cursor:pointer; font-size:12px; text-align:left; width:100%; }
+button:hover { border-color:#7c6af7; color:#7c6af7; }
+</style>
+<div class="lbl">Deploy Panel</div>
+<button onclick="x('k8s-status')">☁ Check K8s Status</button>
+<button onclick="x('mock-deploy-dev')">▶ Mock Deploy Dev</button>
+<button onclick="x('mock-rollback')">↩ Mock Rollback</button>
+<button onclick="x('git-push-dry')">⬆ Git Push Dry Run</button>
+<script>const x=n=>window.parent.postMessage({type:'exec',snippet:n},'*')<\/script>
+</script>
+
+<script type="text/plain" id="src-hello-world">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#0d0d14; color:#d4d4e8; font-family:system-ui; display:flex; align-items:center; justify-content:center; height:100vh; }
+h1 { font-size:28px; font-weight:200; color:#7c6af7; letter-spacing:2px; }
+</style>
+<h1>Hello from Melquíades ✦</h1>
+</script>
+
+<script type="text/plain" id="src-demo-structure">
+<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>
+<div class="app">
+  <div class="panel timer-panel">
+    <div class="panel-title">Focus Timer</div>
+    <div class="timer-display" id="timer">25:00</div>
+    <div class="timer-row">
+      <button id="btn-start">Start</button>
+      <button id="btn-reset">Reset</button>
+    </div>
+    <div class="session-label" id="session-label">Pomodoro · 25 min</div>
+  </div>
+  <div class="panel tasks-panel">
+    <div class="panel-title">Sprint Tasks</div>
+    <div class="task-row">
+      <input id="task-input" placeholder="Add a task and press Enter…">
+      <button id="btn-add">+</button>
+    </div>
+    <ul id="task-list"></ul>
+    <div class="task-footer" id="task-footer">0 tasks</div>
+  </div>
+</div>
+</body></html>
+</script>
+
+<script type="text/plain" id="src-demo-styles">
+* { box-sizing: border-box; margin: 0; padding: 0 }
+body {
+  background: #0d1117;
+  color: #e6edf3;
+  font-family: 'Courier New', monospace;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+.app { display: flex; gap: 20px; padding: 24px; width: 100%; max-width: 780px }
+.panel {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 10px;
+  padding: 24px;
+}
+.panel-title {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #8b949e;
+  margin-bottom: 20px;
+}
+.timer-panel { flex: 1; text-align: center }
+.timer-display {
+  font-size: 64px;
+  font-weight: 700;
+  color: #58a6ff;
+  letter-spacing: 4px;
+  margin-bottom: 20px;
+  font-variant-numeric: tabular-nums;
+}
+.timer-row { display: flex; gap: 10px; justify-content: center; margin-bottom: 14px }
+.session-label { font-size: 12px; color: #8b949e }
+.tasks-panel { flex: 1.4 }
+.task-row { display: flex; gap: 8px; margin-bottom: 16px }
+input {
+  background: #0d1117;
+  border: 1px solid #30363d;
+  color: #e6edf3;
+  padding: 7px 12px;
+  border-radius: 6px;
+  flex: 1;
+  font-family: inherit;
+  font-size: 13px;
+}
+input:focus { outline: none; border-color: #58a6ff }
+button {
+  background: #21262d;
+  border: 1px solid #30363d;
+  color: #e6edf3;
+  padding: 7px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  transition: background .15s;
+}
+button:hover { background: #30363d; border-color: #58a6ff }
+#task-list { list-style: none; margin-bottom: 12px }
+#task-list li {
+  padding: 8px 10px;
+  border-bottom: 1px solid #21262d;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 13px;
+  user-select: none;
+}
+#task-list li:hover { background: #21262d }
+#task-list li.done { text-decoration: line-through; color: #8b949e }
+#task-list li::before { content: '○'; color: #58a6ff; font-size: 11px }
+#task-list li.done::before { content: '●'; color: #3fb950 }
+.task-footer { font-size: 11px; color: #8b949e; text-align: right }
+</script>
+
+<script type="text/plain" id="src-demo-logic">
+let secs = 25 * 60, running = false, iv
+const fmt = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`
+const timerEl = document.getElementById('timer')
+const labelEl = document.getElementById('session-label')
+const startBtn = document.getElementById('btn-start')
+const taskInput = document.getElementById('task-input')
+const taskList = document.getElementById('task-list')
+const footer = document.getElementById('task-footer')
+
+startBtn.onclick = () => {
+  if (running) {
+    clearInterval(iv); running = false; startBtn.textContent = 'Start'
+  } else {
+    running = true; startBtn.textContent = 'Pause'
+    iv = setInterval(() => {
+      if (secs <= 0) {
+        clearInterval(iv); running = false; startBtn.textContent = 'Start'
+        labelEl.textContent = '✓ Session complete — take a break!'
+        timerEl.style.color = '#3fb950'
+        return
+      }
+      timerEl.textContent = fmt(--secs)
+    }, 1000)
+  }
+}
+
+document.getElementById('btn-reset').onclick = () => {
+  clearInterval(iv); running = false; secs = 25 * 60
+  timerEl.textContent = fmt(secs); timerEl.style.color = ''
+  startBtn.textContent = 'Start'; labelEl.textContent = 'Pomodoro · 25 min'
+}
+
+function addTask() {
+  const val = taskInput.value.trim(); if (!val) return
+  const li = document.createElement('li')
+  li.textContent = val
+  li.onclick = () => { li.classList.toggle('done'); updateFooter() }
+  taskList.appendChild(li); taskInput.value = ''; updateFooter()
+}
+
+function updateFooter() {
+  const total = taskList.children.length
+  const done = taskList.querySelectorAll('.done').length
+  footer.textContent = done ? `${done}/${total} done` : `${total} task${total !== 1 ? 's' : ''}`
+}
+
+document.getElementById('btn-add').onclick = addTask
+taskInput.addEventListener('keydown', e => { if (e.key === 'Enter') addTask() })
+</script>
+
 <header>
-  <h1>Melquíades</h1>
-  <div class="chain" id="chain"></div>
-  <div class="ai-label"><span class="ai-dot"></span> AI ready</div>
+  <h1>🔮 Melquíades</h1>
+  <div class="chain" id="chain">select a snippet to begin</div>
+  <div class="ai-label"><div class="ai-dot"></div>mistral-7b · :5000</div>
 </header>
 
 <main>
   <!-- LEFT: snippet list -->
   <div class="col">
-    <div class="col-header">Snippets</div>
-    <div class="tags-row">
-      <input type="text" placeholder="filter tags…" id="tag-filter">
+    <div class="col-header" style="display:flex;justify-content:space-between;align-items:center">Snippets
+      <button class="btn btn-plain btn-sm" onclick="newSnippet()">+ New</button>
     </div>
-    <div id="snip-list"></div>
+    <div class="multi-select-controls" id="multi-controls" style="display:none; padding: 8px 12px; border-bottom: 1px solid var(--border); gap: 8px; align-items: center;">
+      <label style="font-size: 11px; color: var(--muted);">
+        <input type="checkbox" id="select-all" onchange="toggleSelectAll()"> Select all
+      </label>
+      <button class="btn btn-plain btn-sm" onclick="chainSelected()">Chain</button>
+      <button class="btn btn-plain btn-sm" onclick="deleteSelected()" style="color: var(--danger);">Delete</button>
+      <span style="font-size: 11px; color: var(--muted);" id="selection-count">0 selected</span>
+    </div>
+    <div id="snip-list" style="flex: 1; overflow-y: auto;"></div>
+    <div class="col-header">Tags</div>
+    <div id="tags-panel" style="padding: 8px 12px; flex-shrink: 0;">
+      <div id="snippet-tags" style="display: flex; flex-wrap: wrap; gap: 4px;">
+        <span style="font-size: 11px; color: var(--muted);">Select a snippet to see tags</span>
+      </div>
+    </div>
   </div>
 
   <!-- CENTER: editor -->
   <div class="col">
-    <div class="col-header">Editor</div>
-    
+    <div class="meta-row">
+      <span class="meta-title" id="meta-title">—</span>
+      <span class="badge" id="meta-lang" onclick="changeLang()" title="Click to change language" style="cursor:pointer">—</span>
+    </div>
+    <div class="tags-row">
+      <input id="meta-tags" placeholder="tags: ui, timer, deploy…" spellcheck="false">
+    </div>
     <div class="tabs">
-      <div class="tab active" id="tab-prompt" onclick="switchTab('prompt')">Prompt</div>
-      <div class="tab" id="tab-snippet" onclick="switchTab('snippet')">Snippet</div>
-      <div class="tab" id="tab-run" onclick="switchTab('run')">Run</div>
+      <div class="tab active" id="tab-prompt"  onclick="switchTab('prompt')">Prompt</div>
+      <div class="tab"        id="tab-snippet" onclick="switchTab('snippet')">Snippet</div>
+      <div class="tab"        id="tab-run"     onclick="switchTab('run')">Run</div>
     </div>
 
     <div id="screen-prompt" class="screen active">
-      <div class="meta-row">
-        <span class="meta-title" id="meta-title">Select a snippet</span>
-        <span class="badge" id="meta-lang">-</span>
-      </div>
-      <textarea id="body-prompt" placeholder="Write a prompt or note…"></textarea>
+      <textarea id="body-prompt" spellcheck="false" placeholder="Describe what you want to build…"></textarea>
       <div class="actions">
         <button class="btn btn-accent" onclick="generate()">Generate ▸</button>
-        <button class="btn btn-plain" onclick="clearPrompt()">Clear</button>
+        <label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;cursor:pointer">
+          <input type="checkbox" id="chk-code-only" checked> code only
+        </label>
+        <select id="ctx-picker" onchange="insertCtx(this)" style="background:var(--bg3);border:1px solid var(--border);color:var(--muted);font-size:11px;border-radius:3px;padding:2px 4px;cursor:pointer">
+          <option value="">@ insert snippet…</option>
+        </select>
+        <button class="btn btn-plain" onclick="save()">Save</button>
+        <button class="btn btn-plain" onclick="saveAs()">Save As</button>
       </div>
     </div>
 
     <div id="screen-snippet" class="screen">
-      <div class="meta-row">
-        <span class="meta-title" id="meta-title-snip">-</span>
-        <span class="badge" id="meta-lang-snip">-</span>
-        <input type="text" id="meta-tags" placeholder="tags…" style="flex:0.3; background:var(--bg3); border:1px solid var(--border); color:var(--text); padding:2px 6px; border-radius:3px; font-size:11px;">
-      </div>
       <textarea id="body-snippet" spellcheck="false" placeholder="Snippet code appears here…"></textarea>
       <div class="gen-label" id="gen-label">✦ generated from <span id="gen-from"></span></div>
       <div class="actions">
@@ -235,6 +442,14 @@ footer { display: flex; align-items: center; gap: 8px; padding: 6px 14px; backgr
 
 <script>
 const SNIPPETS = {
+  'deploy-prompt':    { lang:'prompt', generates:'deploy-panel', body:()=>$('src-deploy-prompt').textContent.trim() },
+  'deploy-panel':     { lang:'html',                             body:()=>$('src-deploy-panel').textContent.trim() },
+  'hello-world':      { lang:'html',                             body:()=>$('src-hello-world').textContent.trim() },
+  'demo-structure':   { lang:'html',  tags:['demo','focus'],     body:()=>$('src-demo-structure').textContent.trim() },
+  'demo-styles':      { lang:'css',   tags:['demo','focus'],     body:()=>$('src-demo-styles').textContent.trim() },
+  'demo-logic':       { lang:'js',    tags:['demo','focus'],     body:()=>$('src-demo-logic').textContent.trim() },
+  'demo-chain':       { lang:'chain', tags:['demo','chain'],     body:()=>'demo-structure\ndemo-styles\ndemo-logic' },
+  'startup-chain':    { lang:'chain', tags:['startup','auto'],   body:()=>'hello-world' },
   'sample-json':      { lang:'json',  tags:['data','example'],   body:()=>JSON.stringify({
     "name": "Sample API Response",
     "version": "1.0",
@@ -289,21 +504,44 @@ const SNIPPETS = {
   }, null, 2) },
 }
 
+const MOCK = {
+  'k8s-status':      ['3 pods running','deployment/api   ✓ ready (1/1)','deployment/worker ✓ ready (2/2)'],
+  'mock-deploy-dev': ['pulling image v1.4.2…','image ready','rolling out to dev…','rollout complete ✓'],
+  'mock-rollback':   ['finding previous revision…','restoring v1.4.1','rollback complete ✓'],
+  'git-push-dry':    ['dry-run: checking remote…','dry-run: 2 commits ahead of origin/main','dry-run: push ok (nothing sent)'],
+}
+
 const state = { current:null, currentId:null, registered:{}, generatedFrom:null, generating:false, abortCtrl:null, lastHtml:'' }
 const $ = id => document.getElementById(id)
 const srcdoc = html => `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>${html}</body></html>`
 
 function buildList() {
+  const picker = $('ctx-picker')
+  if (picker) {
+    picker.innerHTML = '<option value="">@ insert snippet…</option>'
+    Object.keys(SNIPPETS).forEach(name => {
+      const o = document.createElement('option'); o.value = name; o.textContent = name
+      picker.appendChild(o)
+    })
+  }
   const el = $('snip-list')
   el.innerHTML = ''
   Object.keys(SNIPPETS).forEach(name => {
     const d = document.createElement('div')
     d.className = 'snip-item'; d.id = `item-${name}`
-    const t = (SNIPPETS[name].tags||[]).join(' ')
-    d.innerHTML = `<span class="snip-dot" id="dot-${name}"></span><span class="snip-name">${name}</span><span class="snip-lang">${SNIPPETS[name].lang}</span>${t ? `<span class="snip-tags">${t}</span>` : ''}`
-    d.onclick = () => selectSnippet(name)
+    d.innerHTML = `
+      <input type="checkbox" class="snippet-checkbox" data-snippet="${name}" onchange="updateMultiSelect()" style="margin-right: 8px;">
+      <span class="snip-name">${name}</span>
+      <span class="snip-lang">${SNIPPETS[name].lang}</span>
+    `
+    d.onclick = (e) => {
+      if (e.target.type !== 'checkbox') {
+        selectSnippet(name)
+      }
+    }
     el.appendChild(d)
   })
+  updateMultiSelect()
 }
 
 function selectSnippet(name) {
@@ -317,6 +555,9 @@ function selectSnippet(name) {
   $('meta-tags').value = (SNIPPETS[name].tags || []).join(', ')
   $('gen-label').style.display   = 'none'
   $('btn-suggest').style.display = 'none'
+  
+  // Update tags panel
+  updateTagsPanel(SNIPPETS[name].tags || [])
   
   // Update mindmap button for JSON snippets
   const btnMindmap = $('btn-mindmap')
@@ -334,6 +575,29 @@ function selectSnippet(name) {
   setChain([name])
 }
 
+function updateTagsPanel(tags) {
+  const panel = $('snippet-tags')
+  if (!tags || tags.length === 0) {
+    panel.innerHTML = '<span style="font-size: 11px; color: var(--muted);">No tags</span>'
+  } else {
+    panel.innerHTML = tags.map(tag => 
+      `<span style="font-size: 10px; color: var(--accent); background: var(--bg3); border: 1px solid var(--border); padding: 2px 6px; border-radius: 3px;">${tag}</span>`
+    ).join('')
+  }
+}
+
+function updateRegistry() {
+  const bar = $('registry-bar')
+  const names = Object.keys(state.registered)
+  if (names.length) {
+    bar.innerHTML = names.map(name => `<span class="reg-pill">${name}</span>`).join('')
+    $('registry-empty').style.display = 'none'
+  } else {
+    bar.innerHTML = ''
+    $('registry-empty').style.display = 'inline'
+  }
+}
+
 function switchTab(t) {
   ['prompt','snippet','run'].forEach(id => {
     $(`tab-${id}`).classList.toggle('active', id === t)
@@ -347,142 +611,49 @@ function setChain(steps) {
   ).join('')
 }
 
-function clearPrompt() {
-  $('body-prompt').value = ''
-  $('ai-output').textContent = 'Prompt cleared'
+function resolveContext(text) {
+  const refs = []
+  const resolved = text.replace(/@([\.\w-]+)/g, (match, name) => {
+    const sn = SNIPPETS[name]
+    if (!sn) return match
+    refs.push(name)
+    return `\n\n[Context: ${name}]\n${sn.body()}\n`
+  })
+  return { resolved, refs }
 }
 
-function save() {
-  if (!state.current) { appendLog('no snippet selected','error'); return }
-  SNIPPETS[state.current].body = () => $('body-snippet').value.trim()
-  appendLog(`[save] ${state.current}`,'action')
-}
-
-function saveAs() {
-  const name = prompt('New snippet name:')
+function insertCtx(sel) {
+  const name = sel.value; sel.value = ''
   if (!name) return
-  SNIPPETS[name] = {
-    lang: $('meta-lang').textContent,
-    tags: $('meta-tags').value.split(',').map(s=>s.trim()).filter(Boolean),
-    body: () => $('body-snippet').value.trim()
-  }
-  buildList()
-  selectSnippet(name)
-  appendLog(`[save-as] ${name}`,'action')
+  const ta = $('body-prompt')
+  const pos = ta.selectionStart
+  const val = ta.value
+  const ins = (pos > 0 && val[pos-1] !== ' ' && val[pos-1] !== '\n') ? ` @${name}` : `@${name}`
+  ta.value = val.slice(0, pos) + ins + val.slice(pos)
+  ta.selectionStart = ta.selectionEnd = pos + ins.length
+  ta.focus()
 }
 
-function register() {
-  if (!state.current) { appendLog('no snippet selected','error'); return }
-  state.registered[state.current] = true
-  updateRegistry()
-  appendLog(`[register] ${state.current}`,'action')
-}
-
-function deleteSnippet() {
-  if (!state.current) return
-  if (!confirm(`Delete "${state.current}"?`)) return
-  delete SNIPPETS[state.current]
-  delete state.registered[state.current]
-  buildList()
-  updateRegistry()
-  state.current = null
-  $('body-prompt').value = ''
-  $('body-snippet').value = ''
-  switchTab('prompt')
-  appendLog(`[delete] snippet removed`,'action')
-}
-
-function updateRegistry() {
-  const bar = $('registry-bar')
-  const names = Object.keys(state.registered)
-  if (names.length) {
-    bar.innerHTML = names.map(name => `<span class="registry-item">${name}</span>`).join('')
-    $('registry-empty').style.display = 'none'
-  } else {
-    bar.innerHTML = ''
-    $('registry-empty').style.display = 'inline'
-  }
-}
-
-function execute() {
-  const code = $('body-snippet').value.trim()
-  if (!code) { appendLog('no code to execute','error'); return }
-  const lang = $('meta-lang').textContent
-  runCode(code, lang, state.current || 'unnamed')
-  switchTab('run')
-}
-
-function runCode(code, lang, name) {
-  const isFullDoc = code.trimStart().toLowerCase().startsWith('<!doctype') || code.trimStart().toLowerCase().startsWith('<html')
-  if (lang === 'css') {
-    if (state.lastHtml) {
-      state.lastHtml = injectIntoHtml(state.lastHtml, 'css', code)
-      $('sandbox').srcdoc = state.lastHtml
-      appendLog(`[execute] ${name} — CSS injected`,'action')
-    } else {
-      const demo = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>\n${code}\n</style></head><body><h1>Heading</h1><h2>Subheading</h2><p>Paragraph text. <a href="#">A link</a>.</p><ul><li>Item one</li><li>Item two</li></ul><button>Button</button><input placeholder="Input"></body></html>`
-      state.lastHtml = demo; $('sandbox').srcdoc = demo
-      appendLog(`[execute] ${name} — CSS preview`,'action')
-    }
-  } else if (lang === 'js') {
-    if (state.lastHtml) {
-      state.lastHtml = injectIntoHtml(state.lastHtml, 'js', code)
-      $('sandbox').srcdoc = state.lastHtml
-      appendLog(`[execute] ${name} — JS injected`,'action')
-    } else {
-      $('sandbox').srcdoc = srcdoc(`<script>\n${code}\n<\/script>`)
-      appendLog(`[execute] ${name} — JS standalone`,'action')
-    }
-  } else {
-    state.lastHtml = isFullDoc ? code : srcdoc(code)
-    $('sandbox').srcdoc = state.lastHtml
-    appendLog(`[execute] ${name} — done`,'action')
-  }
-}
-
-function injectIntoHtml(base, tag, code) {
-  if (tag === 'css') {
-    const style = `<style>\n${code}\n</style>`
-    const hi = base.lastIndexOf('</head>')
-    if (hi !== -1) return base.slice(0, hi) + style + base.slice(hi)
-    const bi = base.lastIndexOf('<body')
-    if (bi !== -1) return base.slice(0, bi) + style + base.slice(bi)
-    return style + base
-  }
-  if (tag === 'js') {
-    const script = `<script>\n${code}\n<\/script>`
-    const i = base.lastIndexOf('</body>')
-    if (i !== -1) return base.slice(0, i) + script + base.slice(i)
-    return base + script
-  }
-  return base
-}
-
-function stop() {
-  $('sandbox').srcdoc = '<!DOCTYPE html><html><body></body></html>'
-  state.lastHtml = ''
-  appendLog('[stop] sandbox cleared','action')
-}
-
-function appendLog(msg, type = '') {
-  const log = $('log')
-  const line = document.createElement('div')
-  line.className = `log-line ${type}`
-  line.textContent = msg
-  log.appendChild(line)
-  log.scrollTop = log.scrollHeight
-}
-
-// AI Functions
 async function generate() {
   const raw = $('body-prompt').value.trim()
   if (!raw) { appendLog('prompt is empty','error'); return }
-  
+  let { resolved: prompt, refs } = resolveContext(raw)
+  if (refs.length) appendLog(`[generate] context: ${refs.map(r=>'@'+r).join(', ')}`,'action')
+  const snippetBody = $('body-snippet').value.trim()
+  if (snippetBody) {
+    prompt += `\n\n[Current snippet: ${state.current}]\n${snippetBody}`
+    appendLog(`[generate] auto-context: snippet ${state.current}`,'action')
+  }
+  const system = $('chk-code-only').checked
+    ? 'You output ONLY raw code. No explanation, no comments, no markdown fences, no backticks. Start with the first line of code. Stop after the last line of code. Never add any text after the code.'
+    : ''
+  const src = state.current
   switchTab('snippet')
   const ta = $('body-snippet')
   state.prevSnippet = ta.value
   ta.value = ''
   appendLog('[generate] calling /api/ai/generate…','action')
+  setChain([src, 'streaming…'])
   state.generating = true; state.abortCtrl = new AbortController()
   $('btn-stop-gen').disabled = false
 
@@ -491,7 +662,7 @@ async function generate() {
     resp = await fetch('/api/ai/generate', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({prompt: raw}),
+      body: JSON.stringify({prompt, system}),
       signal: state.abortCtrl.signal
     })
   } catch (e) {
@@ -513,7 +684,7 @@ async function generate() {
       for (const line of lines) {
         if (!line.startsWith('data: ')) continue
         const payload = line.slice(6)
-        if (payload === '[DONE]') { finishGenerate(state.current); return }
+        if (payload === '[DONE]') { finishGenerate(src); return }
         try {
           const token = JSON.parse(payload)?.choices?.[0]?.delta?.content
           if (token) { ta.value += token; ta.scrollTop = ta.scrollHeight }
@@ -525,7 +696,7 @@ async function generate() {
     else appendLog('[generate] stopped','action')
     state.generating = false; $('btn-stop-gen').disabled = true; return
   }
-  finishGenerate(state.current)
+  finishGenerate(src)
 }
 
 function stopGenerate() {
@@ -538,102 +709,32 @@ function stopGenerate() {
   }
 }
 
+function stripFences(text) {
+  const blocks = [...text.matchAll(/```(?:\w*)\n([\s\S]*?)```/g)].map(m => m[1].trim())
+  return blocks.length ? blocks.join('\n\n') : text
+}
+
 function finishGenerate(src) {
   state.generating = false; $('btn-stop-gen').disabled = true
+  if ($('chk-code-only').checked) {
+    const stripped = stripFences($('body-snippet').value)
+    $('body-snippet').value = stripped
+    const t = stripped.trim()
+    const lang = $('meta-lang').textContent
+    if (lang === 'html' && (!t.startsWith('<') || !t.endsWith('>'))) {
+      $('body-prompt').value = stripped
+      $('body-snippet').value = state.prevSnippet || ''
+      switchTab('prompt')
+      appendLog('[generate] not HTML — routed back to prompt · snippet restored', 'action')
+      setChain([src, 'not HTML ↩'])
+      return
+    }
+  }
   state.generatedFrom = src
   $('gen-label').style.display   = 'block'; $('gen-from').textContent = src
   $('btn-suggest').style.display = 'block'
   appendLog('[generate] done','action')
   setChain([src, 'generated ✓'])
-}
-
-function buildJSONMindMap(data, rootKey = "JSON") {
-  if (data === null || data === undefined) {
-    return {
-      root: rootKey,
-      branches: [{
-        id: 'null_value',
-        label: 'null/undefined',
-        color: "#ff7b72",
-        tip: 'Data is null or undefined',
-        leaves: []
-      }]
-    }
-  }
-  
-  function processNode(obj, key, path = "") {
-    const branches = []
-    const leaves = []
-    
-    if (typeof obj === 'object' && obj !== null) {
-      if (Array.isArray(obj)) {
-        branches.push({
-          id: `array_${path.replace(/\./g, '_')}`,
-          label: `${key} [${obj.length}]`,
-          color: "#d2a8ff",
-          tip: `Array with ${obj.length} items`,
-          leaves: obj.slice(0, 3).map((item, i) => ({
-            id: `item_${path.replace(/\./g, '_')}_${i}`,
-            label: `Item ${i + 1}`,
-            tip: typeof item === 'object' ? JSON.stringify(item).substring(0, 50) + '...' : String(item)
-          }))
-        })
-        
-        obj.slice(0, 3).forEach((item, i) => {
-          if (typeof item === 'object' && item !== null) {
-            const nested = processNode(item, `Item ${i + 1}`, `${path}.${i}`)
-            branches.push(...nested.branches)
-          }
-        })
-      } else {
-        const entries = Object.entries(obj)
-        branches.push({
-          id: `obj_${path.replace(/\./g, '_')}`,
-          label: `${key} {${entries.length}}`,
-          color: "#79c0ff",
-          tip: `Object with ${entries.length} properties`,
-          leaves: entries.slice(0, 4).map(([k, v]) => ({
-            id: `prop_${path.replace(/\./g, '_')}_${k}`,
-            label: k,
-            tip: `${k}: ${typeof v} ${Array.isArray(v) ? `[${v.length}]` : typeof v === 'object' ? `{...}` : String(v).substring(0, 30)}`
-          }))
-        })
-        
-        entries.slice(0, 3).forEach(([k, v]) => {
-          if (typeof v === 'object' && v !== null && !Array.isArray(v)) {
-            const nested = processNode(v, k, `${path}.${k}`)
-            branches.push(...nested.branches)
-          }
-        })
-      }
-    } else {
-      leaves.push({
-        id: `value_${path.replace(/\./g, '_')}`,
-        label: `${key}: ${String(obj).substring(0, 20)}`,
-        tip: `${key}: ${typeof obj} = ${String(obj)}`
-      })
-    }
-    
-    return { branches, leaves }
-  }
-  
-  const result = processNode(data, rootKey)
-  const branches = result.branches.slice(0, 6)
-  
-  if (branches.length === 0) {
-    branches.push({
-      id: 'single_value',
-      label: `${rootKey}`,
-      color: "#79c0ff",
-      tip: 'Single value',
-      leaves: result.leaves || []
-    })
-  }
-  
-  return {
-    root: rootKey,
-    branches: branches
-  }
 }
 
 function buildMindMapHTML(data) {
@@ -726,86 +827,657 @@ window.addEventListener('mousemove',e=>{
 <\/script></body></html>`
 }
 
-async function mindMap() {
-  appendLog('[mind-map] Starting mindmap process…','action')
-  
-  const code = $('body-snippet').value.trim()
-  if (!code) { 
-    appendLog('[mind-map] ERROR: No code in snippet editor','error'); 
-    return 
+function buildJSONMindMap(data, rootKey = "JSON") {
+  // Handle edge cases
+  if (data === null || data === undefined) {
+    return {
+      root: rootKey,
+      branches: [{
+        id: 'null_value',
+        label: 'null/undefined',
+        color: "#ff7b72",
+        tip: 'Data is null or undefined',
+        leaves: []
+      }]
+    }
   }
   
+  function processNode(obj, key, path = "") {
+    const branches = []
+    const leaves = []
+    
+    if (typeof obj === 'object' && obj !== null) {
+      if (Array.isArray(obj)) {
+        // Array handling
+        branches.push({
+          id: `array_${path.replace(/\./g, '_')}`,
+          label: `${key} [${obj.length}]`,
+          color: "#d2a8ff",
+          tip: `Array with ${obj.length} items`,
+          leaves: obj.slice(0, 3).map((item, i) => ({
+            id: `item_${path.replace(/\./g, '_')}_${i}`,
+            label: `Item ${i + 1}`,
+            tip: typeof item === 'object' ? JSON.stringify(item).substring(0, 50) + '...' : String(item)
+          }))
+        })
+        
+        // Process nested structures
+        obj.slice(0, 3).forEach((item, i) => {
+          if (typeof item === 'object' && item !== null) {
+            const nested = processNode(item, `Item ${i + 1}`, `${path}.${i}`)
+            branches.push(...nested.branches)
+          }
+        })
+      } else {
+        // Object handling
+        const entries = Object.entries(obj)
+        branches.push({
+          id: `obj_${path.replace(/\./g, '_')}`,
+          label: `${key} {${entries.length}}`,
+          color: "#79c0ff",
+          tip: `Object with ${entries.length} properties`,
+          leaves: entries.slice(0, 4).map(([k, v]) => ({
+            id: `prop_${path.replace(/\./g, '_')}_${k}`,
+            label: k,
+            tip: `${k}: ${typeof v} ${Array.isArray(v) ? `[${v.length}]` : typeof v === 'object' ? `{...}` : String(v).substring(0, 30)}`
+          }))
+        })
+        
+        // Process nested objects
+        entries.slice(0, 3).forEach(([k, v]) => {
+          if (typeof v === 'object' && v !== null && !Array.isArray(v)) {
+            const nested = processNode(v, k, `${path}.${k}`)
+            branches.push(...nested.branches)
+          }
+        })
+      }
+    } else {
+      // Primitive value
+      leaves.push({
+        id: `value_${path.replace(/\./g, '_')}`,
+        label: `${key}: ${String(obj).substring(0, 20)}`,
+        tip: `${key}: ${typeof obj} = ${String(obj)}`
+      })
+    }
+    
+    return { branches, leaves }
+  }
+  
+  const result = processNode(data, rootKey)
+  const branches = result.branches.slice(0, 6) // Limit to 6 main branches
+  
+  // Ensure we have at least one branch
+  if (branches.length === 0) {
+    branches.push({
+      id: 'single_value',
+      label: `${rootKey}`,
+      color: "#79c0ff",
+      tip: 'Single value',
+      leaves: result.leaves || []
+    })
+  }
+  
+  return {
+    root: rootKey,
+    branches: branches
+  }
+}
+
+async function mindMap() {
+  const code = $('body-snippet').value.trim()
+  if (!code) { appendLog('no snippet to map','error'); return }
+  
   const lang = $('meta-lang').textContent
-  appendLog(`[mind-map] Language detected: ${lang}`,'action')
-  appendLog(`[mind-map] Code length: ${code.length} chars`,'action')
   
   if (lang === 'json') {
-    appendLog('[mind-map] Processing JSON directly…','action')
+    // Handle JSON directly without AI
+    appendLog('[mind-map] parsing JSON structure…','action')
     try {
+      appendLog(`[mind-map] JSON length: ${code.length} chars`,'action')
       const jsonData = JSON.parse(code)
-      appendLog(`[mind-map] ✓ JSON parsed successfully, type: ${typeof jsonData}`,'action')
-      
+      appendLog(`[mind-map] JSON parsed successfully, type: ${typeof jsonData}`,'action')
       const mindMapData = buildJSONMindMap(jsonData, state.current || 'JSON')
-      appendLog(`[mind-map] ✓ Mindmap data created, branches: ${mindMapData.branches.length}`,'action')
+      appendLog(`[mind-map] Mindmap created, branches: ${mindMapData.branches.length}`,'action')
       
+      // Validate mindmap data structure
       if (!mindMapData.root || !Array.isArray(mindMapData.branches)) {
-        throw new Error(`Invalid mindmap structure - root: ${mindMapData.root}, branches: ${typeof mindMapData.branches}`)
+        throw new Error('Invalid mindmap data structure')
       }
       
       const html = buildMindMapHTML(mindMapData)
-      appendLog(`[mind-map] ✓ HTML generated, length: ${html.length} chars`,'action')
-      
       $('body-snippet').value = html
-      appendLog(`[mind-map] ✓ HTML placed in editor`,'action')
-      
       execute()
-      appendLog(`[mind-map] ✓ Executed in sandbox`,'action')
-      
+      appendLog(`[mind-map] JSON visualization · ${mindMapData.branches.length} branches`,'action')
       setChain([state.current, 'json-mind-map ✓'])
-      appendLog(`[mind-map] ✓ JSON mindmap complete!`,'action')
-      
     } catch(e) { 
-      appendLog(`[mind-map] ✗ JSON ERROR: ${e.message}`,'error')
+      appendLog(`[mind-map] JSON error: ${e.message}`,'error')
       appendLog(`[mind-map] Debug - First 100 chars: ${code.substring(0, 100)}`,'action')
-      console.error('Mindmap error:', e)
     }
   } else {
-    appendLog('[mind-map] Processing with AI model…','action')
+    // Use AI for other languages
+    appendLog('[mind-map] asking model for relationships…','action')
     try {
       const resp = await fetch('/api/ai/mindmap', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({prompt: code})
       })
-      if (!resp.ok) throw new Error(`API error: ${resp.status} ${resp.statusText}`)
+      if (!resp.ok) throw new Error(await resp.text())
       const data = await resp.json()
-      if (!data.branches?.length) { 
-        appendLog('[mind-map] ✗ No branches returned from AI','error'); 
-        return 
-      }
+      if (!data.branches?.length) { appendLog('[mind-map] no branches returned','error'); return }
       const html = buildMindMapHTML(data)
       $('body-snippet').value = html
       execute()
-      appendLog(`[mind-map] ✓ AI mindmap complete: ${data.branches.length} branches`,'action')
+      appendLog(`[mind-map] ${data.branches.length} branches · hover nodes for tips`,'action')
       setChain([state.current, 'mind-map ✓'])
-    } catch(e) { 
-      appendLog(`[mind-map] ✗ AI ERROR: ${e.message}`,'error')
-      console.error('AI mindmap error:', e)
-    }
+    } catch(e) { appendLog(`[mind-map] error: ${e.message}`,'error') }
   }
 }
 
-// Placeholder functions for other AI actions
-function decompose() { appendLog('[decompose] not implemented yet','action') }
-function revise() { appendLog('[revise] not implemented yet','action') }
-function explain() { appendLog('[explain] not implemented yet','action') }
-function askQuestions() { appendLog('[ask-questions] not implemented yet','action') }
-function clickChip(text) { appendLog(`[chip] ${text}`,'action') }
-function reflect() { appendLog('[reflect] not implemented yet','action') }
-function suggestNext() { appendLog('[suggest-next] not implemented yet','action') }
+function stop() {
+  requestAnimationFrame(() => {
+    const sandbox = $('sandbox')
+    sandbox.srcdoc = '<!DOCTYPE html><html><body></body></html>'
+    state.lastHtml = ''
+    appendLog('[stop] sandbox cleared','action')
+  })
+}
 
-// Initialize
-buildList()
-updateRegistry()
+function injectIntoHtml(base, tag, code) {
+  if (tag === 'css') {
+    const style = `<style>\n${code}\n</style>`
+    const hi = base.lastIndexOf('</head>')
+    if (hi !== -1) return base.slice(0, hi) + style + base.slice(hi)
+    const bi = base.lastIndexOf('<body')
+    if (bi !== -1) return base.slice(0, bi) + style + base.slice(bi)
+    return style + base
+  }
+  if (tag === 'js') {
+    const script = `<script>\n${code}\n<\/script>`
+    const i = base.lastIndexOf('</body>')
+    if (i !== -1) return base.slice(0, i) + script + base.slice(i)
+    return base + script
+  }
+  return base
+}
+
+function runCode(code, lang, name) {
+  // Use requestAnimationFrame to prevent blocking
+  requestAnimationFrame(() => {
+    const isFullDoc = code.trimStart().toLowerCase().startsWith('<!doctype') || code.trimStart().toLowerCase().startsWith('<html')
+    const sandbox = $('sandbox')
+    
+    if (lang === 'css') {
+      if (state.lastHtml) {
+        state.lastHtml = injectIntoHtml(state.lastHtml, 'css', code)
+        sandbox.srcdoc = state.lastHtml
+        appendLog(`[execute] ${name} — CSS injected`,'action')
+      } else {
+        const demo = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>\n${code}\n</style></head><body><h1>Heading</h1><h2>Subheading</h2><p>Paragraph text. <a href="#">A link</a>.</p><ul><li>Item one</li><li>Item two</li></ul><button>Button</button><input placeholder="Input"></body></html>`
+        state.lastHtml = demo; sandbox.srcdoc = demo
+        appendLog(`[execute] ${name} — CSS preview`,'action')
+      }
+    } else if (lang === 'js') {
+      if (state.lastHtml) {
+        state.lastHtml = injectIntoHtml(state.lastHtml, 'js', code)
+        sandbox.srcdoc = state.lastHtml
+        appendLog(`[execute] ${name} — JS injected`,'action')
+      } else {
+        sandbox.srcdoc = srcdoc(`<script>\n${code}\n<\/script>`)
+        appendLog(`[execute] ${name} — JS standalone`,'action')
+      }
+    } else {
+      state.lastHtml = isFullDoc ? code : srcdoc(code)
+      sandbox.srcdoc = state.lastHtml
+      appendLog(`[execute] ${name} — done`,'action')
+    }
+  })
+}
+
+async function executeChain(names, chainName) {
+  switchTab('run')
+  appendLog(`[chain] ${chainName}: ${names.join(' → ')}`,'action')
+  for (const name of names) {
+    const sn = SNIPPETS[name]
+    if (!sn) { appendLog(`[chain] unknown snippet: ${name}`,'error'); continue }
+    const code = sn.body ? sn.body() : (sn.code || '')
+    runCode(code, sn.lang, name)
+    await new Promise(r => setTimeout(r, 80))
+  }
+  setChain([chainName, ...names, '✓'])
+  appendLog(`[chain] ${chainName} complete`,'action')
+}
+
+// Debounce execution to prevent rapid calls
+let executeTimeout = null
+function execute() {
+  // Clear any pending execution
+  if (executeTimeout) {
+    clearTimeout(executeTimeout)
+  }
+  
+  // Debounce execution with small delay
+  executeTimeout = setTimeout(() => {
+    const code = $('body-snippet').value.trim()
+    if (!code) { appendLog('snippet is empty','error'); return }
+    const lang = $('meta-lang').textContent
+    if (lang === 'chain') {
+      const names = code.split('\n').map(l => l.trim()).filter(Boolean)
+      executeChain(names, state.current)
+      return
+    }
+    switchTab('run')
+    runCode(code, lang, state.current)
+    const steps = state.generatedFrom ? [state.generatedFrom, state.current, 'execute'] : [state.current, 'execute']
+    setChain(steps)
+    executeTimeout = null
+  }, 50) // 50ms debounce
+}
+
+function register() {
+  const name = state.current, code = $('body-snippet').value.trim()
+  if (!name) return
+  if (!state.registered[name]) {
+    const pill = document.createElement('button')
+    pill.className = 'reg-pill'; pill.textContent = name; pill.id = `pill-${name}`
+    pill.onclick = () => runRegistered(name)
+    $('registry-bar').appendChild(pill)
+    $('registry-empty').style.display = 'none'
+    const area = $('panels-area')
+    area.querySelector('.empty-msg')?.remove()
+    const card = document.createElement('div')
+    card.className = 'panel-card'; card.id = `card-${name}`
+    card.innerHTML = `<div class="panel-card-hdr"><span>${name}</span><span class="x" onclick="removePanel('${name}')">✕</span></div><iframe id="pframe-${name}" sandbox="allow-scripts"></iframe>`
+    area.appendChild(card)
+  }
+  $(`pframe-${name}`).srcdoc = srcdoc(code)
+  $(`dot-${name}`).classList.add('reg')
+  state.registered[name] = code
+  appendLog(`[register] ${name} registered as panel/tool`,'action')
+  const steps = state.generatedFrom ? [state.generatedFrom, name, 'execute', 'register ✓'] : [name, 'execute', 'register ✓']
+  setChain(steps)
+}
+
+function removePanel(name) {
+  $(`card-${name}`)?.remove(); $(`pill-${name}`)?.remove()
+  $(`dot-${name}`)?.classList.remove('reg'); delete state.registered[name]
+  if (!Object.keys(state.registered).length) {
+    $('registry-empty').style.display = ''
+    $('panels-area').innerHTML = '<div class="empty-msg">Register a snippet to add it here as a live panel.</div>'
+  }
+  appendLog(`[register] ${name} removed`,'action')
+}
+
+function runRegistered(name) {
+  switchTab('run'); appendLog(`[deploy-panel] triggered: ${name}`,'action')
+  const lines = MOCK[name] ?? [`${name}: no mock action defined`]
+  lines.forEach((l,i) => setTimeout(() => appendLog(`[${name}] ${l}`,'output'), i*320))
+}
+
+function appendLog(msg, cls='') {
+  const el = $('log'), line = document.createElement('div')
+  line.className = `log-line ${cls}`
+  line.textContent = `${new Date().toLocaleTimeString('en',{hour12:false})}  ${msg}`
+  el.appendChild(line); el.scrollTop = el.scrollHeight
+}
+
+function suggestNext() {
+  const opts = [
+    'add-error-handler — wrap exec calls in try/catch, show error in log',
+    'status-poller — poll /api/status every 5s and append to log',
+    'confirm-dialog — show confirmation before rollback/destructive actions',
+  ]
+  switchTab('run')
+  appendLog(`[suggest] next: ${opts[Math.floor(Math.random()*opts.length)]}`,'action')
+}
+
+// ── AI sidebar actions ───────────────────────────────────────────
+function streamToOutput(text) {
+  const el = $('ai-output')
+  el.textContent = ''; el.classList.add('live')
+  let i = 0
+  const iv = setInterval(() => { el.textContent += text[i++]; if (i >= text.length) clearInterval(iv) }, 16)
+}
+
+async function decompose() {
+  const prompt = $('body-snippet').value.trim() || $('body-prompt').value.trim()
+  if (!prompt) { appendLog('nothing to decompose','error'); return }
+  appendLog('[decompose] calling /api/ai/decompose…','action')
+  try {
+    const resp = await fetch('/api/ai/decompose', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({prompt})
+    })
+    const {tasks} = await resp.json()
+    streamToOutput(`Decompose →\n${tasks.map((t,i)=>`${i+1}. ${t}`).join('\n')}`)
+    appendLog(`[decompose] ${tasks.length} units identified`,'action')
+  } catch (e) { appendLog(`[decompose] error: ${e.message}`,'error') }
+}
+
+function revise() {
+  if (!$('body-snippet').value.trim()) { appendLog('no snippet to revise','error'); return }
+  appendLog('[revise] streaming revision…','action')
+  streamToOutput('Revised: extracted button handler into named function. Added null check on postMessage target. Reduced nesting by one level.')
+}
+
+function explain() {
+  if (!$('body-snippet').value.trim()) { appendLog('no snippet to explain','error'); return }
+  streamToOutput('This snippet renders a deployment panel. Each button calls postMessage with an action name. The parent app intercepts the message and routes it to mock shell commands, streaming output to the log.')
+}
+
+function askQuestions() {
+  const qs = [
+    'What happens when K8s is unreachable?',
+    'Should rollback require confirmation?',
+    'Which snippet should chain after deploy?',
+    'How do you test this panel in isolation?',
+    'What is the expected output format?',
+  ]
+  const el = $('chip-list')
+  el.innerHTML = qs.map(q => `<div class="chip" onclick="clickChip(this.textContent)">${q}</div>`).join('')
+  appendLog('[questions] 5 questions generated','action')
+}
+
+function reflect() {
+  const issues = [
+    'No error handling on exec calls — add try/catch',
+    'Output grows unbounded — add max-height + scroll',
+    'Destructive ops (rollback, deploy) have no confirmation step',
+  ]
+  $('reflection-list').innerHTML = issues.map(t => `<div class="reflect-item">${t}</div>`).join('')
+  appendLog('[reflect] 3 issues identified','action')
+}
+
+function clickChip(q) {
+  selectSnippet('deploy-prompt')
+  $('body-prompt').value = q
+  appendLog(`[questions] prompt: "${q}"`,'action')
+}
+
+window.addEventListener('message', e => { if (e.data?.type==='exec') runRegistered(e.data.snippet) })
+
+function changeLang() {
+  const current = $('meta-lang').textContent
+  const lang = prompt('Language:', current)
+  if (!lang?.trim() || lang === current) return
+  $('meta-lang').textContent = lang
+  if (state.current) SNIPPETS[state.current].lang = lang
+  buildList()
+  appendLog(`[lang] changed to ${lang}`,'action')
+  save()
+}
+
+async function deleteSnippet() {
+  const name = state.current
+  if (!state.currentId) { appendLog(`[delete] ${name} not in DB — removed from list`,'action'); delete SNIPPETS[name]; buildList(); selectSnippet(Object.keys(SNIPPETS)[0]); return }
+  if (!confirm(`Delete "${name}"? This cannot be undone.`)) return
+  try {
+    await fetch(`/api/snippets/${state.currentId}`, { method: 'DELETE' })
+    delete SNIPPETS[name]
+    buildList()
+    selectSnippet(Object.keys(SNIPPETS)[0])
+    appendLog(`[delete] ${name} deleted`,'action')
+  } catch(e) { appendLog(`[delete] error: ${e.message}`,'error') }
+}
+
+function newSnippet() {
+  const name = prompt('Snippet name:')
+  if (!name?.trim()) return
+  const lang = prompt('Language (html/js/css/bash/prompt):', 'html') || 'html'
+  SNIPPETS[name] = { lang, body: () => '', id: null }
+  buildList()
+  selectSnippet(name)
+  appendLog(`[new] ${name} (${lang}) — edit and save`,'action')
+}
+
+function parseTags() {
+  return $('meta-tags').value.split(',').map(t => t.trim()).filter(Boolean)
+}
+
+async function save() {
+  const name = state.current
+  const lang = $('meta-lang').textContent
+  const body = $('body-snippet').value
+  const tags = parseTags()
+  try {
+    let resp
+    if (state.currentId) {
+      resp = await fetch(`/api/snippets/${state.currentId}`, {
+        method: 'PUT',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({name, language:lang, body, status:'ready', tags})
+      })
+    } else {
+      resp = await fetch('/api/snippets', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({name, language:lang, body, status:'ready', tags})
+      })
+    }
+    if (!resp.ok) {
+      const errorText = await resp.text()
+      appendLog(`[save] server error ${resp.status}: ${errorText}`,'error')
+      return
+    }
+    const sn = await resp.json()
+    state.currentId = sn.id
+    SNIPPETS[name] = { lang, body: () => sn.body, id: sn.id, tags }
+    appendLog(`[save] ${name} v${sn.version} saved`,'action')
+  } catch(e) { appendLog(`[save] network error: ${e.message}`,'error') }
+}
+
+async function saveAs() {
+  const newName = prompt('Save as:', state.current + '-copy')
+  if (!newName?.trim()) return
+  const lang = $('meta-lang').textContent
+  const body = lang === 'prompt' ? $('body-prompt').value : $('body-snippet').value
+  const tags = parseTags()
+  try {
+    const resp = await fetch('/api/snippets', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({name: newName, language:lang, body, status:'ready', tags})
+    })
+    const sn = await resp.json()
+    SNIPPETS[newName] = { lang, body: () => sn.body, id: sn.id, tags }
+    buildList()
+    selectSnippet(newName)
+    appendLog(`[save-as] ${newName} v1 created`,'action')
+  } catch(e) { appendLog(`[save-as] error: ${e.message}`,'error') }
+}
+
+async function loadFromDB() {
+  appendLog('[db] Loading snippets from database…','action')
+  try {
+    const resp = await fetch('/api/snippets')
+    if (!resp.ok) {
+      throw new Error(`HTTP ${resp.status}: ${resp.statusText}`)
+    }
+    const snips = await resp.json()
+    appendLog(`[db] ✓ Loaded ${snips.length} snippets from database`,'action')
+    snips.forEach(sn => {
+      SNIPPETS[sn.name] = { lang: sn.language, body: () => sn.body, id: sn.id, tags: sn.tags || [] }
+    })
+  } catch(e) { 
+    appendLog(`[db] ✗ Database load failed: ${e.message}`,'error')
+    console.warn('loadFromDB:', e)
+  }
+  buildList()
+  
+  // Execute startup chain
+  appendLog('[startup] Executing startup chain…','action')
+  setTimeout(() => {
+    const startupChain = SNIPPETS['startup-chain']
+    if (startupChain) {
+      const names = startupChain.body().split('\n').map(l => l.trim()).filter(Boolean)
+      executeChain(names, 'startup-chain')
+    } else {
+      // Fallback: select first available snippet
+      const firstSnippet = Object.keys(SNIPPETS)[0]
+      if (firstSnippet) {
+        selectSnippet(firstSnippet)
+        appendLog(`[db] Selected first snippet: ${firstSnippet}`,'action')
+      } else {
+        appendLog(`[db] No snippets available`,'error')
+      }
+    }
+  }, 500) // Small delay to ensure UI is ready
+}
+
+// Multi-select functions
+function updateMultiSelect() {
+  const checkboxes = document.querySelectorAll('.snippet-checkbox')
+  const selected = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.dataset.snippet)
+  const controls = $('multi-controls')
+  const count = $('selection-count')
+  
+  if (selected.length > 0) {
+    controls.style.display = 'flex'
+    count.textContent = `${selected.length} selected`
+  } else {
+    controls.style.display = 'none'
+  }
+  
+  // Update select-all checkbox
+  const selectAll = $('select-all')
+  if (selectAll) {
+    selectAll.checked = selected.length === checkboxes.length && checkboxes.length > 0
+    selectAll.indeterminate = selected.length > 0 && selected.length < checkboxes.length
+  }
+}
+
+function toggleSelectAll() {
+  const selectAll = $('select-all')
+  const checkboxes = document.querySelectorAll('.snippet-checkbox')
+  checkboxes.forEach(cb => cb.checked = selectAll.checked)
+  updateMultiSelect()
+}
+
+function getSelectedSnippets() {
+  return Array.from(document.querySelectorAll('.snippet-checkbox:checked'))
+    .map(cb => cb.dataset.snippet)
+}
+
+function chainSelected() {
+  const selected = getSelectedSnippets()
+  if (selected.length < 2) {
+    appendLog('[chain] Select at least 2 snippets to chain','error')
+    return
+  }
+  
+  const chainName = prompt('Chain name:', selected.join('-chain'))
+  if (!chainName?.trim()) return
+  
+  const chainBody = selected.join('\n')
+  SNIPPETS[chainName] = {
+    lang: 'chain',
+    tags: ['chain', 'auto'],
+    body: () => chainBody
+  }
+  
+  buildList()
+  selectSnippet(chainName)
+  appendLog(`[chain] Created chain "${chainName}" with ${selected.length} snippets`,'action')
+  
+  // Clear selection
+  document.querySelectorAll('.snippet-checkbox').forEach(cb => cb.checked = false)
+  updateMultiSelect()
+}
+
+async function deleteSelected() {
+  const selected = getSelectedSnippets()
+  if (selected.length === 0) return
+  
+  const confirmMsg = `Delete ${selected.length} snippet${selected.length > 1 ? 's' : ''}?\n${selected.join(', ')}`
+  if (!confirm(confirmMsg)) return
+  
+  appendLog(`[delete] Deleting ${selected.length} snippets…`,'action')
+  
+  // Remove from UI immediately for instant feedback
+  const elementsToRemove = []
+  selected.forEach(name => {
+    const item = $(`item-${name}`)
+    const card = $(`card-${name}`)
+    const pill = $(`pill-${name}`)
+    if (item) elementsToRemove.push(item)
+    if (card) elementsToRemove.push(card)
+    if (pill) elementsToRemove.push(pill)
+  })
+  
+  // Clear UI instantly
+  requestAnimationFrame(() => {
+    elementsToRemove.forEach(el => el?.remove())
+    updateMultiSelect()
+  })
+  
+  // Prepare delete operations with very short timeout
+  const deletePromises = selected.map(async (name) => {
+    const snippet = SNIPPETS[name]
+    if (!snippet) return { name, success: false, error: 'Snippet not found' }
+    
+    try {
+      if (snippet.id) {
+        // Very aggressive timeout - 2 seconds max
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 2000)
+        
+        const resp = await fetch(`/api/snippets/${snippet.id}`, { 
+          method: 'DELETE',
+          signal: controller.signal
+        }).finally(() => clearTimeout(timeoutId))
+        
+        if (!resp.ok) {
+          // Don't wait for error text - just return status
+          return { name, success: false, error: `HTTP ${resp.status}` }
+        }
+        return { name, success: true, fromDb: true }
+      } else {
+        return { name, success: true, fromDb: false }
+      }
+    } catch (e) {
+      return { name, success: false, error: 'Timeout/Network error' }
+    }
+  })
+  
+  // Execute with race condition to prevent hanging
+  const results = await Promise.race([
+    Promise.all(deletePromises),
+    new Promise(resolve => setTimeout(() => resolve([]), 3000)) // 3 second max total
+  ])
+  
+  // Process results in non-blocking way
+  requestAnimationFrame(() => {
+    let deletedCount = 0
+    let errorCount = 0
+    
+    results.forEach(result => {
+      if (result) {
+        if (result.success) {
+          // Remove from local state
+          delete SNIPPETS[result.name]
+          delete state.registered[result.name]
+          deletedCount++
+        } else {
+          errorCount++
+        }
+      }
+    })
+    
+    // Rebuild UI
+    buildList()
+    updateRegistry()
+    
+    // Select first available snippet
+    const firstSnippet = Object.keys(SNIPPETS)[0]
+    if (firstSnippet) {
+      selectSnippet(firstSnippet)
+    }
+    
+    appendLog(`[delete] Complete: ${deletedCount} deleted, ${errorCount} errors`,'action')
+  })
+}
+
+loadFromDB()
 </script>
 </body>
 </html>
