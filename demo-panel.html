@@ -828,98 +828,127 @@ window.addEventListener('mousemove',e=>{
 }
 
 function buildJSONMindMap(data, rootKey = "JSON") {
+  appendLog(`[mind-map] Processing JSON: ${typeof data}, keys: ${Object.keys(data || {}).join(', ')}`,'action')
+  
   // Handle edge cases
   if (data === null || data === undefined) {
+    appendLog(`[mind-map] Data is null/undefined`,'error')
     return {
       root: rootKey,
-      branches: [{
-        id: 'null_value',
-        label: 'null/undefined',
-        color: "#ff7b72",
-        tip: 'Data is null or undefined',
-        leaves: []
-      }]
+      branches: [],
+      leaves: []
     }
   }
   
+  const result = {
+    branches: [],
+    leaves: []
+  }
+  
   function processNode(obj, key, path = "") {
-    const branches = []
-    const leaves = []
+    const currentPath = path ? `${path}.${key}` : key
     
     if (typeof obj === 'object' && obj !== null) {
       if (Array.isArray(obj)) {
         // Array handling
-        branches.push({
+        const branch = {
           id: `array_${path.replace(/\./g, '_')}`,
           label: `${key} [${obj.length}]`,
-          color: "#d2a8ff",
+          color: '#79c0ff',
           tip: `Array with ${obj.length} items`,
-          leaves: obj.slice(0, 3).map((item, i) => ({
-            id: `item_${path.replace(/\./g, '_')}_${i}`,
-            label: `Item ${i + 1}`,
-            tip: typeof item === 'object' ? JSON.stringify(item).substring(0, 50) + '...' : String(item)
-          }))
-        })
+          leaves: []
+        }
         
-        // Process nested structures
+        // Process array items
         obj.slice(0, 3).forEach((item, i) => {
           if (typeof item === 'object' && item !== null) {
             const nested = processNode(item, `Item ${i + 1}`, `${path}.${i}`)
-            branches.push(...nested.branches)
+            branch.leaves.push(...nested.branches.map(b => ({...b, id: b.id + '_leaf'})))
+            branch.leaves.push(...nested.leaves)
+          } else {
+            branch.leaves.push({
+              id: `leaf_${path.replace(/\./g, '_')}_${i}`,
+              label: `Item ${i + 1}: ${String(item).substring(0, 15)}`,
+              color: '#79c0ff',
+              tip: `Value: ${String(item)}`
+            })
           }
         })
+        
+        result.branches.push(branch)
       } else {
         // Object handling
         const entries = Object.entries(obj)
-        branches.push({
+        const branch = {
           id: `obj_${path.replace(/\./g, '_')}`,
-          label: `${key} {${entries.length}}`,
-          color: "#79c0ff",
-          tip: `Object with ${entries.length} properties`,
-          leaves: entries.slice(0, 4).map(([k, v]) => ({
-            id: `prop_${path.replace(/\./g, '_')}_${k}`,
-            label: k,
-            tip: `${k}: ${typeof v} ${Array.isArray(v) ? `[${v.length}]` : typeof v === 'object' ? `{...}` : String(v).substring(0, 30)}`
-          }))
-        })
+          label: `${key} (${entries.length})`,
+          color: '#79c0ff',
+          tip: `Object: ${entries.slice(0, 3).map(([k]) => k).join(', ')}${entries.length > 3 ? '...' : ''}`,
+          leaves: []
+        }
         
-        // Process nested objects
-        entries.slice(0, 3).forEach(([k, v]) => {
-          if (typeof v === 'object' && v !== null && !Array.isArray(v)) {
-            const nested = processNode(v, k, `${path}.${k}`)
-            branches.push(...nested.branches)
+        // Process object properties
+        entries.forEach(([k, v]) => {
+          if (typeof v === 'object' && v !== null) {
+            if (Array.isArray(v)) {
+              const nested = processNode(v, k, `${path}.${k}`)
+              branch.leaves.push(...nested.branches.map(b => ({...b, id: b.id + '_leaf'})))
+              branch.leaves.push(...nested.leaves)
+            } else {
+              // Nested object - create a leaf for it
+              branch.leaves.push({
+                id: `leaf_${path.replace(/\./g, '_')}_${k}`,
+                label: k,
+                color: '#79c0ff',
+                tip: `Nested object with ${Object.keys(v).length} properties`
+              })
+            }
+          } else {
+            // Primitive value
+            branch.leaves.push({
+              id: `leaf_${path.replace(/\./g, '_')}_${k}`,
+              label: `${k}: ${String(v).substring(0, 15)}`,
+              color: '#79c0ff',
+              tip: `Value: ${String(v)}`
+            })
           }
         })
+        
+        result.branches.push(branch)
       }
     } else {
-      // Primitive value
-      leaves.push({
+      // Primitive value at root level
+      result.leaves.push({
         id: `value_${path.replace(/\./g, '_')}`,
         label: `${key}: ${String(obj).substring(0, 20)}`,
-        tip: `${key}: ${typeof obj} = ${String(obj)}`
+        color: '#79c0ff',
+        tip: `Value: ${String(obj)}`
       })
     }
     
-    return { branches, leaves }
+    return result
   }
   
-  const result = processNode(data, rootKey)
-  const branches = result.branches.slice(0, 6) // Limit to 6 main branches
+  const processed = processNode(data, rootKey)
+  const branches = processed.branches.slice(0, 8) // Limit to 8 main branches
   
   // Ensure we have at least one branch
   if (branches.length === 0) {
     branches.push({
       id: 'single_value',
-      label: `${rootKey}`,
-      color: "#79c0ff",
-      tip: 'Single value',
-      leaves: result.leaves || []
+      label: 'Data',
+      color: '#79c0ff',
+      tip: 'Single data value',
+      leaves: []
     })
   }
   
+  appendLog(`[mind-map] Generated ${branches.length} branches, ${processed.leaves.length} leaves`,'action')
+  
   return {
     root: rootKey,
-    branches: branches
+    branches: branches,
+    leaves: processed.leaves
   }
 }
 
@@ -1017,14 +1046,18 @@ function runCode(code, lang, name) {
         appendLog(`[execute] ${name} — CSS preview`,'action')
       }
     } else if (lang === 'js') {
+      // Ensure JavaScript is always wrapped in proper script tags
+      let jsHtml
       if (state.lastHtml) {
         state.lastHtml = injectIntoHtml(state.lastHtml, 'js', code)
-        sandbox.srcdoc = state.lastHtml
-        appendLog(`[execute] ${name} — JS injected`,'action')
+        jsHtml = state.lastHtml
       } else {
-        sandbox.srcdoc = srcdoc(`<script>\n${code}\n<\/script>`)
-        appendLog(`[execute] ${name} — JS standalone`,'action')
+        // For standalone JS, create a proper HTML document with script tags
+        jsHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body><div id="widget"></div><script>\ntry {\n${code}\n} catch(e) {\n  console.error('JS Error:', e);\n  document.body.innerHTML += '<div style="color:red;padding:10px;border:1px solid red;margin:10px;">JS Error: ' + e.message + '</div>';\n}\n<\/script></body></html>`
+        state.lastHtml = jsHtml
       }
+      sandbox.srcdoc = jsHtml
+      appendLog(`[execute] ${name} — JS executed`,'action')
     } else {
       state.lastHtml = isFullDoc ? code : srcdoc(code)
       sandbox.srcdoc = state.lastHtml
