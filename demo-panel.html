@@ -1132,6 +1132,41 @@ function buildList() {
   
   // Set up tag filter event listeners
   const tagFilter = $('tag-filter')
+  if (tagFilter) {
+    tagFilter.addEventListener('input', (e) => {
+      const query = e.target.value.toLowerCase().trim()
+      const items = document.querySelectorAll('.snip-item')
+      
+      items.forEach(item => {
+        const name = item.dataset.snippet
+        const snippet = SNIPPETS[name]
+        if (!snippet) return
+        
+        // Check if snippet matches filter query
+        const matchesName = name.toLowerCase().includes(query)
+        const matchesLang = snippet.lang.toLowerCase().includes(query)
+        const matchesTags = snippet.tags && snippet.tags.some(tag => tag.toLowerCase().includes(query))
+        
+        const isVisible = matchesName || matchesLang || matchesTags
+        item.style.display = isVisible ? 'flex' : 'none'
+      })
+      
+      // Show/hide clear button
+      const clearBtn = $('clear-filter')
+      if (clearBtn) {
+        clearBtn.style.display = query ? 'inline-block' : 'none'
+      }
+    })
+    
+    // Set up clear filter button
+    const clearBtn = $('clear-filter')
+    if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+        tagFilter.value = ''
+        tagFilter.dispatchEvent(new Event('input'))
+      })
+    }
+  }
 }
 
 // Initialize application when DOM is ready
@@ -1955,7 +1990,9 @@ function execute() {
     return
   }
   
-  const code = snippet.body()
+  // Read current content from textarea, not cached snippet body
+  const ta = $('body-snippet')
+  const code = ta ? ta.value.trim() : ''
   if (!code) return
   
   appendLog(`Executing ${name} (${snippet.lang})`, 'action')
@@ -2034,7 +2071,7 @@ async function generate() {
     resp = await fetch('/api/ai/generate', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({prompt, system}),
+      body: JSON.stringify({prompt, system, character: 'Melquíades', mode: 'chat'}),
       signal: state.abortCtrl.signal
     })
   } catch (e) {
