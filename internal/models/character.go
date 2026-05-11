@@ -8,27 +8,32 @@ import (
 )
 
 type Character struct {
-	Name        string            `json:"name"`
-	Description string            `json:"description"`
-	Model       string            `json:"model"`
-	System      string            `json:"system"`
-	Stop        []string          `json:"stop"`
-	MaxTokens   int               `json:"max_tokens"`
-	Temperature float64           `json:"temperature"`
-	TopP        float64           `json:"top_p"`
-	Params      map[string]any    `json:"params"`
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	Model       string         `json:"model"`
+	System      string         `json:"system"`
+	Greeting    string         `json:"greeting"`
+	Context     string         `json:"context"`
+	Stop        []string       `json:"stop"`
+	MaxTokens   int            `json:"max_tokens"`
+	Temperature float64        `json:"temperature"`
+	TopP        float64        `json:"top_p"`
+	Params      map[string]any `json:"params"`
 }
 
 type CharacterConfig struct {
 	Characters map[string]Character `json:"characters"`
-	Active    string              `json:"active"`
+	Active     string               `json:"active"`
 }
 
 func LoadCharacters() (*CharacterConfig, error) {
-	// Try to load from ooba characters directory
-	oobaCharsPath := filepath.Join(os.Getenv("OOBA_PATH"), "characters")
-	if oobaCharsPath == "." {
-		oobaCharsPath = filepath.Join("..", "ooba", "characters")
+	// Try to load from ooba user_data characters directory
+	oobaPath := os.Getenv("OOBA_PATH")
+	var oobaCharsPath string
+	if oobaPath == "" {
+		oobaCharsPath = filepath.Join("c:", "Users", "mifam", "src", "ooba", "user_data", "characters")
+	} else {
+		oobaCharsPath = filepath.Join(oobaPath, "user_data", "characters")
 	}
 
 	config := &CharacterConfig{
@@ -40,7 +45,7 @@ func LoadCharacters() (*CharacterConfig, error) {
 	config.Characters["default"] = Character{
 		Name:        "Default",
 		Description: "Standard Melquíades assistant",
-		Model:       "mistral-7b-instruct-v0.2.Q4_K_M.gguf",
+		Model:       "Mistral-7B-Instruct-v0.2",
 		System:      "You are a helpful AI assistant for a development environment.",
 		Stop:        []string{"\n\nThis", "\n\nNote", "\n\nIn this", "\n\nThe above", "\n\nYou can", "\n\nHere", "\n\nPlease"},
 		MaxTokens:   1024,

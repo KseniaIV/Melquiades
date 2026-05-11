@@ -8,7 +8,6 @@ import (
 	"io"
 	"net/http"
 	"strings"
-	"sync"
 
 	"melquiades/internal/models"
 )
@@ -19,19 +18,11 @@ type generateRequest struct {
 	Prompt    string `json:"prompt"`
 	System    string `json:"system"`
 	Character string `json:"character,omitempty"`
+	Mode      string `json:"mode,omitempty"` // "instruct" or "chat"
 }
 
-var (
-	charConfig *models.CharacterConfig
-	charOnce   sync.Once
-	charErr    error
-)
-
 func getCharConfig() (*models.CharacterConfig, error) {
-	charOnce.Do(func() {
-		charConfig, charErr = models.LoadCharacters()
-	})
-	return charConfig, charErr
+	return models.LoadCharacters()
 }
 
 const decomposeSystem = `You are a task decomposer. The user gives you a description or snippet. Return ONLY a flat JSON array of short task strings, no explanation, no markdown. Example: ["task one","task two"]`
@@ -230,6 +221,11 @@ func Generate() http.HandlerFunc {
 			if err := config.SetActive(req.Character); err == nil {
 				char = config.GetActive()
 			}
+		} else {
+			// Force Melquíades character by default
+			if err := config.SetActive("Melquíades"); err == nil {
+				char = config.GetActive()
+			}
 		}
 
 		flush, ok := w.(http.Flusher)
@@ -239,22 +235,64 @@ func Generate() http.HandlerFunc {
 		}
 
 		msgs := []map[string]string{}
-		systemPrompt := char.System
-		if req.System != "" {
-			systemPrompt = req.System
-		}
-		if systemPrompt != "" {
-			msgs = append(msgs, map[string]string{"role": "system", "content": systemPrompt})
-		}
-		msgs = append(msgs, map[string]string{"role": "user", "content": req.Prompt})
+		var oobaReq map[string]any
 
-		oobaReq := map[string]any{
-			"model":       char.Model,
-			"messages":    msgs,
-			"stream":      true,
-			"max_tokens":  char.MaxTokens,
-			"temperature": char.Temperature,
-			"top_p":       char.TopP,
+		// Handle different modes
+		if req.Mode == "instruct" {
+			// OpenAI instruct format - prepend system prompt to user message
+			systemPrompt := char.System
+			if req.System != "" {
+				systemPrompt = req.System
+			}
+
+			userMessage := req.Prompt
+			if systemPrompt != "" {
+				userMessage = systemPrompt + "\n\n" + req.Prompt
+			}
+
+			// Debug logging
+			fmt.Printf("[DEBUG] Instruct mode - System prompt: %s\n", systemPrompt)
+			fmt.Printf("[DEBUG] Instruct mode - User message: %s\n", userMessage)
+
+			msgs = append(msgs, map[string]string{"role": "user", "content": userMessage})
+
+			oobaReq = map[string]any{
+				"model":       char.Model,
+				"messages":    msgs,
+				"stream":      true,
+				"max_tokens":  char.MaxTokens,
+				"temperature": char.Temperature,
+				"top_p":       char.TopP,
+			}
+		} else {
+			// Default: character mode (current behavior)
+			// Add character greeting and context to establish Melquíades persona
+			if char.Greeting != "" {
+				msgs = append(msgs, map[string]string{"role": "assistant", "content": char.Greeting})
+			}
+			if char.Context != "" {
+				msgs = append(msgs, map[string]string{"role": "system", "content": char.Context})
+			}
+
+			systemPrompt := char.System
+			if req.System != "" {
+				systemPrompt = req.System
+			}
+			if systemPrompt != "" {
+				msgs = append(msgs, map[string]string{"role": "system", "content": systemPrompt})
+			}
+			msgs = append(msgs, map[string]string{"role": "user", "content": req.Prompt})
+
+			oobaReq = map[string]any{
+				"model":       char.Model,
+				"character":   req.Character,
+				"mode":        "chat",
+				"messages":    msgs,
+				"stream":      true,
+				"max_tokens":  char.MaxTokens,
+				"temperature": char.Temperature,
+				"top_p":       char.TopP,
+			}
 		}
 
 		stopWords := char.Stop
