@@ -662,7 +662,7 @@ async function generate() {
     resp = await fetch('/api/ai/generate', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({prompt, system}),
+      body: JSON.stringify({prompt, system, character: 'Melquíades'}),
       signal: state.abortCtrl.signal
     })
   } catch (e) {

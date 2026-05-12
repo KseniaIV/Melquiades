@@ -1,81 +1,68 @@
 # Melquiades
 
-A self-writing IDE where you can write or generate code snippets.
+## Features
 
----
+### Build IDE
+- Snippet-based development environment
+- Multi-language support (js, css, html, bash, sql, go, python, dockerfile, kubernetes, prompt)
+- Real-time editing and execution
+- Database persistence for snippets
 
-## What this is
+### Tinkerable Runtime
+- Sandbox execution in iframe
+- Live preview of HTML/CSS/JS
+- Chain execution for multi-snippet workflows
+- Runtime inspection and debugging
 
-Melquiades is the second iteration of my favorite pet project.
+### AI Generation
+- Optional AI-assisted snippet generation
+- Character-based interactions (Melquíades)
+- Context-aware generation using existing snippets
+- Streaming responses with abort capability
 
-The original version was a very lean core workbench with a starter database of snippets. I wanted a flexible tool that I could rearrange for different needs — small custom timers, widgets, UI samples. My long-term goal was always to be able to develop and deploy within the IDE itself.
+### Chain Execution
+- Sequential snippet execution
+- Auto-generation of missing snippets
+- Browser-safe snippet combination
+- Visual execution logging
 
-As a DevOps engineer, I find a lot lacking in most orchestration tools I use, as well as in the marketplace-driven focus of proprietary IDEs. I think an IDE should adapt to the individual — to personality and task. This project follows the same idea, but applied to AI-assisted development.
+### Character Interactions
+- Melquíades character system
+- Custom character definitions
+- System prompts and context
+- Greeting and context messages
 
-When I work with AI, I benefit most from its reflections and its ability to visualize structure. So I added features where it suggests follow-up questions and can turn a snippet into a mind map.
+## Dependencies
 
-This version keeps that spirit, but adds something I care about personally:  
-working with tools without giving up control. I want something that helps me think, break things down, and suggest directions — while I stay close enough to understand every piece so I can reuse it later.
+### API Layer
+- Go 1.24+ backend
+- RESTful API endpoints
+- JSON request/response format
+- Server-sent events for streaming
 
----
+### Database Layer
+- PostgreSQL persistence
+- Snippet storage and retrieval
+- Character configuration
+- Version tracking
 
-## How it works
+### AI Backend
+- oobabooga integration (optional)
+- OpenAI-compatible API
+- Character loading from user_data/characters
+- Model: Mistral-7B-Instruct-v0.2
 
-Everything is a snippet.
+### Runtime
+- Browser sandbox execution
+- iframe srcdoc rendering
+- Mermaid diagram support
+- Real-time log output
 
-A snippet can be:
-- code (js, css, html, bash, etc)
-- a prompt
-- a small panel
-- a step in a chain
-- a tool action
+## Philosophy
 
-Snippets are small on purpose.
+Melquiades is a tool inspired by the power of independent tinkering. It is designed to be flexible and modular, allowing you to build and experiment with your ideas in a way that best suits your needs.
 
-A typical flow looks like:
-- write a note or a prompt
-- break it down (manually or with AI)
-- generate a few small snippets
-- edit them until they make sense
-- run them in the sandbox
-- connect them into a chain
-- optionally turn them into a small tool or panel
-
-You can stop at any step. Nothing is forced into a full system.
-
----
-
-## AI (optional)
-
-AI is there, but it's not required.
-
-You can use it to:
-- generate snippets
-- decompose a problem
-- suggest next steps
-- reflect on what you built
-- turn notes into mind maps
-
-Or you can ignore it and write everything yourself.
-Everything stays visible and editable.
-
----
-
-## Current state
-
-This is still a prototype.
-
-Right now the focus is:
-
-- generating and editing snippets
-- running snippets in a sandbox
-- chaining snippets together
-- experimenting with simple tool panels
-- exploring note → mind map → snippet workflows
-
----
-
-## Running locally
+## Installation
 
 **Requirements:** Go 1.24+, PostgreSQL on port 5433, oobabooga on port 5000 (optional for AI)
 
@@ -98,4 +85,3 @@ go run main.go
 Override the DB connection:
 ```bash
 DATABASE_URL="postgres://user:password@localhost:5433/melquiades?sslmode=disable" go run main.go
-```
