@@ -2,6 +2,7 @@
 
 A self-writing IDE where you can write or generate code snippets.
 
+[screenshot](screenshot.png)
 ---
 
 ## What this is
