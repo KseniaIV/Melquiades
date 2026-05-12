@@ -716,7 +716,7 @@ function stripFences(text) {
 
 function finishGenerate(src) {
   state.generating = false; $('btn-stop-gen').disabled = true
-  if ($('chk-code-only').checked) {
+  if ($('chk-code-only').checked && $('meta-lang').textContent !== 'prompt') {
     const stripped = stripFences($('body-snippet').value)
     $('body-snippet').value = stripped
     const t = stripped.trim()
@@ -1029,6 +1029,7 @@ function injectIntoHtml(base, tag, code) {
   return base
 }
 
+
 function runCode(code, lang, name) {
   // Use requestAnimationFrame to prevent blocking
   requestAnimationFrame(() => {
@@ -1058,6 +1059,12 @@ function runCode(code, lang, name) {
       }
       sandbox.srcdoc = jsHtml
       appendLog(`[execute] ${name} — JS executed`,'action')
+    } else if (lang === 'mermaid') {
+      // Auto-wrap mermaid code in HTML for execution
+      var mermaidHtml = '<!DOCTYPE html><html><head><meta charset="UTF-8"><script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"><\/script><style>body{padding:20px;background:#f5f5f5}.mermaid{background:white;padding:20px;border-radius:8px}<\/style><\/head><body><div class="mermaid">' + code + '<\/div><script>mermaid.initialize({startOnLoad:true})<\/script><\/body><\/html>';
+      state.lastHtml = mermaidHtml;
+      sandbox.srcdoc = mermaidHtml;
+      appendLog('[execute] ' + name + ' — Mermaid diagram rendered','action');
     } else {
       state.lastHtml = isFullDoc ? code : srcdoc(code)
       sandbox.srcdoc = state.lastHtml
@@ -1256,7 +1263,7 @@ async function deleteSnippet() {
 function newSnippet() {
   const name = prompt('Snippet name:')
   if (!name?.trim()) return
-  const lang = prompt('Language (html/js/css/bash/prompt):', 'html') || 'html'
+  const lang = prompt('Language (html/js/css/bash/prompt/mermaid):', 'html') || 'html'
   SNIPPETS[name] = { lang, body: () => '', id: null }
   buildList()
   selectSnippet(name)
