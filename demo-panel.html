@@ -447,16 +447,11 @@ taskInput.addEventListener('keydown', e => { if (e.key === 'Enter') addTask() })
     <div id="snip-list" style="flex: 1; overflow-y: auto;"></div>
     <div class="col-header">Tags</div>
     <div id="tags-panel" style="padding: 8px 12px; flex-shrink: 0;">
-<<<<<<< HEAD
-      <input id="tag-filter" placeholder="Filter by tag..." oninput="buildList()" style="width: 100%; margin-bottom: 8px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 3px; background: var(--bg2); color: var(--fg); font-size: 11px;">
-      <div id="snippet-tags" style="display: flex; flex-wrap: wrap; gap: 4px;">
-=======
       <div class="tags-row">
         <input id="tag-filter" type="text" placeholder="Filter by tag or type..." style="flex: 1; background: transparent; border: none; color: var(--muted); font: 11px/1.4 system-ui; outline: none;">
         <button id="clear-filter" class="btn btn-sm" style="display: none; padding: 2px 6px; font-size: 10px; background: var(--bg3); color: var(--muted); border: 1px solid var(--border); border-radius: 3px; cursor: pointer;">Clear</button>
       </div>
       <div id="snippet-tags" style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px;">
->>>>>>> main
         <span style="font-size: 11px; color: var(--muted);">Select a snippet to see tags</span>
       </div>
     </div>
@@ -1151,7 +1146,6 @@ function buildList() {
   })
   updateMultiSelect()
   
-<<<<<<< HEAD
   // Update tags panel
   updateTagsPanel(SNIPPETS[name].tags || [])
   
@@ -1563,30 +1557,7 @@ async function mindMap() {
       appendLog(`[mind-map] JSON parsed successfully, type: ${typeof jsonData}`,'action')
       const mindMapData = buildJSONMindMap(jsonData, state.current || 'JSON')
       appendLog(`[mind-map] Mindmap created, branches: ${mindMapData.branches.length}`,'action')
-=======
-  // Set up tag filter event listeners
-  const tagFilter = $('tag-filter')
-  if (tagFilter) {
-    tagFilter.addEventListener('input', (e) => {
-      const query = e.target.value.toLowerCase().trim()
-      const items = document.querySelectorAll('.snip-item')
->>>>>>> main
       
-      items.forEach(item => {
-        const name = item.dataset.snippet
-        const snippet = SNIPPETS[name]
-        if (!snippet) return
-        
-        // Check if snippet matches filter query
-        const matchesName = name.toLowerCase().includes(query)
-        const matchesLang = snippet.lang.toLowerCase().includes(query)
-        const matchesTags = snippet.tags && snippet.tags.some(tag => tag.toLowerCase().includes(query))
-        
-        const isVisible = matchesName || matchesLang || matchesTags
-        item.style.display = isVisible ? 'flex' : 'none'
-      })
-      
-<<<<<<< HEAD
       const html = buildMindMapHTML(mindMapData)
       $('body-snippet').value = html
       execute()
@@ -1643,7 +1614,6 @@ function injectIntoHtml(base, tag, code) {
   return base
 }
 
-
 function runCode(code, lang, name) {
   // Use requestAnimationFrame to prevent blocking
   requestAnimationFrame(() => {
@@ -1683,73 +1653,8 @@ function runCode(code, lang, name) {
       state.lastHtml = isFullDoc ? code : srcdoc(code)
       sandbox.srcdoc = state.lastHtml
       appendLog(`[execute] ${name} — done`,'action')
-=======
-      // Show/hide clear button
-      const clearBtn = $('clear-filter')
-      if (clearBtn) {
-        clearBtn.style.display = query ? 'inline-block' : 'none'
-      }
-    })
-    
-    // Set up clear filter button
-    const clearBtn = $('clear-filter')
-    if (clearBtn) {
-      clearBtn.addEventListener('click', () => {
-        tagFilter.value = ''
-        tagFilter.dispatchEvent(new Event('input'))
-      })
->>>>>>> main
     }
-  }
-}
-
-// Initialize application when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-  // Build initial UI first
-  buildList()
-  
-  // Load database snippets first, then build UI
-  loadFromDB().then(() => {
-    // Execute startup chain
-    appendLog('[startup] Executing startup chain…','action')
-    setTimeout(async () => {
-      appendLog('[startup] Checking for startup-chain snippet…','action')
-      const startupChain = SNIPPETS['startup-chain']
-      if (startupChain) {
-        appendLog('[startup] Found startup-chain, getting names…','action')
-        const names = startupChain.body().split('\n').map(l => l.trim()).filter(Boolean)
-        appendLog(`[startup] Parsed names: ${JSON.stringify(names)}`,'action')
-        await executeChain(names, 'startup-chain')
-      } else {
-        // Fallback: select first available snippet
-        appendLog('[startup] No startup-chain found, using fallback','action')
-        const firstSnippet = Object.keys(SNIPPETS)[0]
-        if (firstSnippet) {
-          selectSnippet(firstSnippet)
-          appendLog(`[db] Selected first snippet: ${firstSnippet}`,'action')
-        } else {
-          appendLog(`[db] No snippets available`,'error')
-        }
-      }
-    }, 500) // Small delay to ensure UI is ready
-  }).catch(e => {
-    appendLog(`[startup] Error: ${e.message}`, 'error')
   })
-<<<<<<< HEAD
-}
-
-async function executeChain(names, chainName) {
-  switchTab('run')
-  appendLog(`[chain] ${chainName}: ${names.join(' → ')}`,'action')
-  for (const name of names) {
-    const sn = SNIPPETS[name]
-    if (!sn) { appendLog(`[chain] unknown snippet: ${name}`,'error'); continue }
-    const code = sn.body ? sn.body() : (sn.code || '')
-    runCode(code, sn.lang, name)
-    await new Promise(r => setTimeout(r, 80))
-  }
-  setChain([chainName, ...names, '✓'])
-  appendLog(`[chain] ${chainName} complete`,'action')
 }
 
 // Debounce execution to prevent rapid calls
@@ -1778,9 +1683,24 @@ function execute() {
   }, 50) // 50ms debounce
 }
 
+async function executeChain(names, chainName) {
+  switchTab('run')
+  appendLog(`[chain] ${chainName}: ${names.join(' → ')}`,'action')
+  for (const name of names) {
+    const sn = SNIPPETS[name]
+    if (!sn) { appendLog(`[chain] unknown snippet: ${name}`,'error'); continue }
+    const code = sn.body ? sn.body() : (sn.code || '')
+    runCode(code, sn.lang, name)
+    await new Promise(r => setTimeout(r, 80))
+  }
+  setChain([chainName, ...names, '✓'])
+  appendLog(`[chain] ${chainName} complete`,'action')
+}
+
 function register() {
   const name = state.current, code = $('body-snippet').value.trim()
   if (!name) return
+  
   if (!state.registered[name]) {
     const pill = document.createElement('button')
     pill.className = 'reg-pill'; pill.textContent = name; pill.id = `pill-${name}`
@@ -2063,9 +1983,12 @@ async function loadFromDB() {
     }
   }, 500) // Small delay to ensure UI is ready
 }
-=======
+
+// Initialize application when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  buildList()
+  loadFromDB()
 })
->>>>>>> main
 
 // Multi-select functions
 function updateMultiSelect() {
