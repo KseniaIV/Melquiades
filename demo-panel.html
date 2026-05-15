@@ -318,6 +318,7 @@ taskInput.addEventListener('keydown', e => { if (e.key === 'Enter') addTask() })
     <div id="snip-list" style="flex: 1; overflow-y: auto;"></div>
     <div class="col-header">Tags</div>
     <div id="tags-panel" style="padding: 8px 12px; flex-shrink: 0;">
+      <input id="tag-filter" placeholder="Filter by tag..." oninput="buildList()" style="width: 100%; margin-bottom: 8px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 3px; background: var(--bg2); color: var(--fg); font-size: 11px;">
       <div id="snippet-tags" style="display: flex; flex-wrap: wrap; gap: 4px;">
         <span style="font-size: 11px; color: var(--muted);">Select a snippet to see tags</span>
       </div>
@@ -526,7 +527,23 @@ function buildList() {
   }
   const el = $('snip-list')
   el.innerHTML = ''
+  
+  // Get tag filter value
+  const tagFilter = $('tag-filter').value.trim().toLowerCase()
+  const filterTags = tagFilter ? tagFilter.split(',').map(t => t.trim()).filter(Boolean) : []
+  
   Object.keys(SNIPPETS).forEach(name => {
+    // Apply tag filter
+    if (filterTags.length > 0) {
+      const snippetTags = (SNIPPETS[name].tags || []).map(t => t.toLowerCase())
+      const hasMatchingTag = filterTags.some(filterTag => 
+        snippetTags.some(snippetTag => snippetTag.includes(filterTag))
+      )
+      if (!hasMatchingTag) {
+        return // Skip this snippet
+      }
+    }
+    
     const d = document.createElement('div')
     d.className = 'snip-item'; d.id = `item-${name}`
     d.innerHTML = `
@@ -1238,13 +1255,48 @@ window.addEventListener('message', e => { if (e.data?.type==='exec') runRegister
 
 function changeLang() {
   const current = $('meta-lang').textContent
-  const lang = prompt('Language:', current)
-  if (!lang?.trim() || lang === current) return
-  $('meta-lang').textContent = lang
-  if (state.current) SNIPPETS[state.current].lang = lang
-  buildList()
-  appendLog(`[lang] changed to ${lang}`,'action')
-  save()
+  const languages = ['html', 'js', 'css', 'bash', 'sql', 'go', 'python', 'dockerfile', 'kubernetes', 'prompt', 'chain', 'json', 'mermaid']
+  
+  // Create dropdown menu
+  const dropdown = document.createElement('select')
+  dropdown.style.cssText = 'position: absolute; z-index: 1000; background: var(--bg2); border: 1px solid var(--border); color: var(--fg); padding: 4px; border-radius: 3px; font-size: 11px;'
+  
+  // Add options
+  languages.forEach(lang => {
+    const option = document.createElement('option')
+    option.value = lang
+    option.textContent = lang
+    option.selected = lang === current
+    dropdown.appendChild(option)
+  })
+  
+  // Position dropdown near the badge
+  const badge = $('meta-lang')
+  const rect = badge.getBoundingClientRect()
+  dropdown.style.left = rect.left + 'px'
+  dropdown.style.top = (rect.bottom + 2) + 'px'
+  
+  // Handle selection
+  dropdown.onchange = () => {
+    const newLang = dropdown.value
+    if (newLang !== current) {
+      $('meta-lang').textContent = newLang
+      if (state.current) SNIPPETS[state.current].lang = newLang
+      buildList()
+      appendLog(`[lang] changed to ${newLang}`,'action')
+      save()
+    }
+    document.body.removeChild(dropdown)
+  }
+  
+  dropdown.onblur = () => setTimeout(() => {
+    if (document.body.contains(dropdown)) {
+      document.body.removeChild(dropdown)
+    }
+  }, 200)
+  
+  document.body.appendChild(dropdown)
+  dropdown.focus()
 }
 
 async function deleteSnippet() {
