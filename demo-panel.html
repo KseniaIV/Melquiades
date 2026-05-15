@@ -1985,9 +1985,29 @@ async function loadFromDB() {
 }
 
 // Initialize application when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   buildList()
-  loadFromDB()
+  await loadFromDB()
+
+  // Execute startup chain after snippets are loaded
+  appendLog('[startup] Executing startup chain…', 'action')
+  setTimeout(() => {
+    const startupChain = SNIPPETS['startup-chain']
+    if (startupChain) {
+      const body = typeof startupChain.body === 'function' ? startupChain.body() : (startupChain.body || '')
+      const names = body.split('\n').map(l => l.trim()).filter(Boolean)
+      appendLog(`[startup] Found startup-chain → ${names.join(' → ')}`, 'action')
+      executeChain(names, 'startup-chain')
+    } else {
+      const firstSnippet = Object.keys(SNIPPETS)[0]
+      if (firstSnippet) {
+        selectSnippet(firstSnippet)
+        appendLog(`[startup] No startup-chain; selected ${firstSnippet}`, 'action')
+      } else {
+        appendLog('[startup] No snippets available', 'error')
+      }
+    }
+  }, 200)
 })
 
 // Multi-select functions
