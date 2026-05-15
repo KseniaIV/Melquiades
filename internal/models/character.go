@@ -12,6 +12,11 @@ type Character struct {
 	Description string         `json:"description"`
 	Model       string         `json:"model"`
 	System      string         `json:"system"`
+<<<<<<< HEAD
+=======
+	Greeting    string         `json:"greeting"`
+	Context     string         `json:"context"`
+>>>>>>> main
 	Stop        []string       `json:"stop"`
 	MaxTokens   int            `json:"max_tokens"`
 	Temperature float64        `json:"temperature"`

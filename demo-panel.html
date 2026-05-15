@@ -94,6 +94,128 @@ textarea { flex: 1; background: var(--bg2); border: none; color: var(--text); fo
 .reflect-item::before { content: '▸'; color: var(--accent); flex-shrink: 0; }
 .btn-sm { padding: 2px 8px; font-size: 10px; }
 
+/* snippet tree panel */
+.tree-controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  align-items: center;
+}
+
+.search-input {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid #30363d;
+  background: #0d1117;
+  color: #e6edf3;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #58a6ff;
+}
+
+.btn-small {
+  padding: 4px 8px;
+  border: 1px solid #30363d;
+  background: #21262d;
+  color: #e6edf3;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-small:hover {
+  background: #30363d;
+  border-color: #58a6ff;
+}
+
+.snippet-tree {
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.tree-node {
+  margin: 1px 0;
+  user-select: none;
+}
+
+.tree-node-content {
+  display: flex;
+  align-items: center;
+  padding: 2px 4px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
+}
+
+.tree-node-content:hover {
+  background: #21262d;
+}
+
+.tree-node-content.selected {
+  background: #0969da;
+  color: #ffffff;
+}
+
+.tree-toggle {
+  width: 12px;
+  height: 12px;
+  margin-right: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8b949e;
+  transition: transform 0.2s ease;
+}
+
+.tree-toggle.expanded {
+  transform: rotate(90deg);
+}
+
+.tree-toggle.no-children {
+  visibility: hidden;
+}
+
+.tree-icon {
+  margin-right: 6px;
+  font-size: 14px;
+}
+
+.tree-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tree-badge {
+  font-size: 10px;
+  background: #21262d;
+  color: #8b949e;
+  padding: 1px 4px;
+  border-radius: 3px;
+  margin-left: 4px;
+}
+
+.tree-children {
+  margin-left: 16px;
+  display: none;
+}
+
+.tree-children.expanded {
+  display: block;
+}
+
+.snippets-list {
+  font-size: 12px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
 /* footer */
 footer { display: flex; align-items: center; gap: 8px; padding: 6px 14px; background: var(--bg2); border-top: 1px solid var(--border); flex-shrink: 0; overflow-x: auto; }
 .footer-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; white-space: nowrap; }
@@ -145,10 +267,17 @@ h1 { font-size:28px; font-weight:200; color:#7c6af7; letter-spacing:2px; }
   <div class="panel timer-panel">
     <div class="panel-title">Focus Timer</div>
     <div class="timer-display" id="timer">25:00</div>
-    <div class="timer-row">
-      <button id="btn-start">Start</button>
-      <button id="btn-reset">Reset</button>
+    <div class="timer-controls">
+      <button id="btn-start" class="btn btn-accent">Start</button>
+      <button id="btn-reset" class="btn btn-plain">Reset</button>
     </div>
+    <div class="ai-actions">
+  <button class="btn btn-accent" onclick="generate()">🤖 Generate</button>
+  <button class="btn btn-plain" onclick="finishGenerate()">⏹️ Stop</button>
+  <button class="btn btn-plain" onclick="testMelquiades()">🧪 Test AI</button>
+  <button class="btn btn-plain" onclick="testInstructMode()">📋 Instruct Mode</button>
+  <button class="btn btn-plain" onclick="debugCharacters()">🔍 Debug Chars</button>
+</div>
     <div class="session-label" id="session-label">Pomodoro · 25 min</div>
   </div>
   <div class="panel tasks-panel">
@@ -318,8 +447,16 @@ taskInput.addEventListener('keydown', e => { if (e.key === 'Enter') addTask() })
     <div id="snip-list" style="flex: 1; overflow-y: auto;"></div>
     <div class="col-header">Tags</div>
     <div id="tags-panel" style="padding: 8px 12px; flex-shrink: 0;">
+<<<<<<< HEAD
       <input id="tag-filter" placeholder="Filter by tag..." oninput="buildList()" style="width: 100%; margin-bottom: 8px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 3px; background: var(--bg2); color: var(--fg); font-size: 11px;">
       <div id="snippet-tags" style="display: flex; flex-wrap: wrap; gap: 4px;">
+=======
+      <div class="tags-row">
+        <input id="tag-filter" type="text" placeholder="Filter by tag or type..." style="flex: 1; background: transparent; border: none; color: var(--muted); font: 11px/1.4 system-ui; outline: none;">
+        <button id="clear-filter" class="btn btn-sm" style="display: none; padding: 2px 6px; font-size: 10px; background: var(--bg3); color: var(--muted); border: 1px solid var(--border); border-radius: 3px; cursor: pointer;">Clear</button>
+      </div>
+      <div id="snippet-tags" style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px;">
+>>>>>>> main
         <span style="font-size: 11px; color: var(--muted);">Select a snippet to see tags</span>
       </div>
     </div>
@@ -390,7 +527,7 @@ taskInput.addEventListener('keydown', e => { if (e.key === 'Enter') addTask() })
         <div class="ai-section-title">Actions</div>
         <div class="ai-actions">
           <button class="btn btn-accent" onclick="generate()">Generate ▸</button>
-          <button class="btn btn-plain"  onclick="decompose()">Decompose ▸</button>
+          <button class="btn btn-plain"  onclick="debugCharacters()">Debug Chars ▸</button>
           <button class="btn btn-plain"  onclick="revise()">Revise</button>
           <button class="btn btn-plain"  onclick="explain()">Explain</button>
         </div>
@@ -436,12 +573,23 @@ taskInput.addEventListener('keydown', e => { if (e.key === 'Enter') addTask() })
 </main>
 
 <footer>
-  <span class="footer-label">Registry</span>
-  <div id="registry-bar"></div>
+  <div class="sidebar">
+    <h2>Snippets</h2>
+    <div id="registry-bar"></div>
+    <div class="tree-controls">
+      <input type="text" id="tree-search" placeholder="Search snippets..." class="search-input">
+      <button id="tree-toggle-all" class="btn-small">Toggle All</button>
+    </div>
+    <div id="snippet-tree" class="snippet-tree"></div>
+    <div id="snippets-list" class="snippets-list" style="display: none;"></div>
+  </div>
   <span id="registry-empty" style="font-size:11px;color:#333">— no registered snippets yet</span>
 </footer>
 
 <script>
+// Utility functions
+const $ = (id) => document.getElementById(id)
+
 const SNIPPETS = {
   'deploy-prompt':    { lang:'prompt', generates:'deploy-panel', body:()=>$('src-deploy-prompt').textContent.trim() },
   'deploy-panel':     { lang:'html',                             body:()=>$('src-deploy-panel').textContent.trim() },
@@ -451,6 +599,449 @@ const SNIPPETS = {
   'demo-logic':       { lang:'js',    tags:['demo','focus'],     body:()=>$('src-demo-logic').textContent.trim() },
   'demo-chain':       { lang:'chain', tags:['demo','chain'],     body:()=>'demo-structure\ndemo-styles\ndemo-logic' },
   'startup-chain':    { lang:'chain', tags:['startup','auto'],   body:()=>'hello-world' },
+  'buttons-panel':    { lang:'html',  tags:['ui','buttons'],     body:()=>`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { 
+      font-family: system-ui; 
+      background: #0d1117; 
+      color: #e6edf3; 
+      padding: 20px;
+      margin: 0;
+    }
+    .panel {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 20px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .panel-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #f0f6fc;
+    }
+    .button-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+    .action-btn {
+      background: #21262d;
+      border: 1px solid #30363d;
+      color: #e6edf3;
+      padding: 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+    .action-btn:hover {
+      background: #30363d;
+      border-color: #58a6ff;
+    }
+    .action-btn:active {
+      background: #58a6ff;
+      color: #ffffff;
+    }
+    .action-btn.clicked {
+      background: #238636;
+      border-color: #3fb950;
+      color: #ffffff;
+    }
+    .event-log {
+      margin-top: 16px;
+      padding: 12px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 12px;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+    .log-entry {
+      margin: 2px 0;
+      padding: 2px 4px;
+      border-radius: 3px;
+    }
+    .log-entry.click {
+      background: #23863620;
+      color: #3fb950;
+    }
+  </style>
+</head>
+<body>
+  <div class="panel">
+    <div class="panel-title">Button Panel - Click Events Demo</div>
+    <div class="button-grid">
+      <button class="action-btn" id="btn-1">Button 1</button>
+      <button class="action-btn" id="btn-2">Button 2</button>
+      <button class="action-btn" id="btn-3">Button 3</button>
+      <button class="action-btn" id="btn-4">Button 4</button>
+      <button class="action-btn" id="btn-5">Button 5</button>
+      <button class="action-btn" id="btn-6">Button 6</button>
+      <button class="action-btn" id="btn-7">Button 7</button>
+      <button class="action-btn" id="btn-8">Button 8</button>
+      <button class="action-btn" id="btn-9">Button 9</button>
+      <button class="action-btn" id="btn-10">Button 10</button>
+    </div>
+    <div class="event-log" id="event-log">
+      <div class="log-entry">Event log will appear here...</div>
+    </div>
+  </div>
+</body>
+</html>` },
+  'add-click-events':  { lang:'js',    tags:['events','buttons'],    body:()=>`// Add click events to all buttons
+const eventLog = document.getElementById('event-log');
+let clickCount = 0;
+
+function logEvent(message, type = 'click') {
+  const entry = document.createElement('div');
+  entry.className = \`log-entry \${type}\`;
+  entry.textContent = \`[\${new Date().toLocaleTimeString()}] \${message}\`;
+  eventLog.appendChild(entry);
+  eventLog.scrollTop = eventLog.scrollHeight;
+}
+
+// Add click events to buttons 1-5
+for (let i = 1; i <= 5; i++) {
+  const btn = document.getElementById(\`btn-\${i}\`);
+  if (btn) {
+    btn.addEventListener('click', function() {
+      clickCount++;
+      this.classList.add('clicked');
+      setTimeout(() => this.classList.remove('clicked'), 200);
+      logEvent(\`Button \${i} clicked! Total clicks: \${clickCount}\`);
+    });
+  }
+}
+
+logEvent('Click events added to buttons 1-5');` },
+  'advanced-events':  { lang:'js',    tags:['events','advanced'],   body:()=>`// Advanced event handling for buttons 6-10
+const eventLog = document.getElementById('event-log');
+const buttonStates = {};
+
+function logEvent(message, type = 'click') {
+  const entry = document.createElement('div');
+  entry.className = \`log-entry \${type}\`;
+  entry.textContent = \`[\${new Date().toLocaleTimeString()}] \${message}\`;
+  eventLog.appendChild(entry);
+  eventLog.scrollTop = eventLog.scrollHeight;
+}
+
+// Advanced event handling for buttons 6-10
+for (let i = 6; i <= 10; i++) {
+  const btn = document.getElementById(\`btn-\${i}\`);
+  if (btn) {
+    // Track button state
+    buttonStates[i] = { clicks: 0, lastClick: null };
+    
+    // Multiple event listeners
+    btn.addEventListener('click', function(e) {
+      buttonStates[i].clicks++;
+      buttonStates[i].lastClick = new Date();
+      
+      // Different actions based on button number
+      const actions = {
+        6: () => logEvent(\`Button \${i}: Double-click mode! Clicks: \${buttonStates[i].clicks}\`),
+        7: () => logEvent(\`Button \${i}: Shift+Click detected: \${e.shiftKey}\`),
+        8: () => logEvent(\`Button \${i}: Ctrl+Click detected: \${e.ctrlKey}\`),
+        9: () => logEvent(\`Button \${i}: Mouse position: (\${e.clientX}, \${e.clientY})\`),
+        10: () => logEvent(\`Button \${i}: Total session clicks: \${Object.values(buttonStates).reduce((sum, state) => sum + state.clicks, 0)}\`)
+      };
+      
+      (actions[i] || (() => logEvent(\`Button \${i} clicked!\`)))();
+      
+      // Visual feedback
+      this.style.transform = 'scale(0.95)';
+      setTimeout(() => this.style.transform = '', 100);
+    });
+    
+    // Mouse events
+    btn.addEventListener('mouseenter', () => {
+      btn.style.borderColor = '#79c0ff';
+    });
+    
+    btn.addEventListener('mouseleave', () => {
+      btn.style.borderColor = '#30363d';
+    });
+  }
+}
+
+logEvent('Advanced events added to buttons 6-10');` },
+  'animated-button':   { lang:'html',  tags:['ui','buttons','animation'], body:()=>`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { 
+      font-family: system-ui; 
+      background: #0d1117; 
+      color: #e6edf3; 
+      padding: 20px;
+      margin: 0;
+    }
+    .container {
+      max-width: 400px;
+      margin: 0 auto;
+    }
+    .animated-btn {
+      background: linear-gradient(45deg, #58a6ff, #3fb950);
+      border: none;
+      color: white;
+      padding: 16px 32px;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    .animated-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(88, 166, 255, 0.3);
+    }
+    .animated-btn:active {
+      transform: translateY(0);
+    }
+    .animated-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s ease;
+    }
+    .animated-btn:hover::before {
+      left: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <button class="animated-btn" onclick="this.textContent = 'Clicked! ' + (parseInt(this.textContent.match(/\\d+/) || [0])[0] + 1)">
+      Animated Button 0
+    </button>
+  </div>
+</body>
+</html>` },
+'stack-visualization': { lang:'html',  tags:['diagram','stack'],     body:()=>`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { 
+      font-family: system-ui; 
+      background: #0d1117; 
+      color: #e6edf3; 
+      padding: 20px;
+      margin: 0;
+    }
+    .stack-container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      text-align: center;
+      color: #f0f6fc;
+    }
+    .stack-layers {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      margin: 20px 0;
+    }
+    .layer {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.3s ease;
+    }
+    .layer:hover {
+      background: #1c2128;
+      border-color: #58a6ff;
+      transform: translateX(4px);
+    }
+    .layer-icon {
+      width: 40px;
+      height: 40px;
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .layer-content {
+      flex: 1;
+    }
+    .layer-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: #f0f6fc;
+    }
+    .layer-desc {
+      font-size: 12px;
+      color: #8b949e;
+      line-height: 1.4;
+    }
+    .flow-arrows {
+      display: flex;
+      justify-content: center;
+      margin: 16px 0;
+      color: #58a6ff;
+      font-size: 20px;
+    }
+    .event-flow {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 16px;
+      margin-top: 20px;
+    }
+    .event-title {
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #f0f6fc;
+    }
+    .event-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .event-step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px;
+      background: #161b22;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .step-number {
+      background: #58a6ff;
+      color: white;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="stack-container">
+    <div class="title">🏗️ Button Event Stack Architecture</div>
+    
+    <div class="stack-layers">
+      <div class="layer">
+        <div class="layer-icon">🖱️</div>
+        <div class="layer-content">
+          <div class="layer-title">User Interaction Layer</div>
+          <div class="layer-desc">Physical mouse click on button element triggers browser event system</div>
+        </div>
+      </div>
+      
+      <div class="layer">
+        <div class="layer-icon">🌐</div>
+        <div class="layer-content">
+          <div class="layer-title">DOM Event System</div>
+          <div class="layer-desc">Browser captures click event, creates event object, begins propagation</div>
+        </div>
+      </div>
+      
+      <div class="layer">
+        <div class="layer-icon">🎯</div>
+        <div class="layer-content">
+          <div class="layer-title">Event Target Resolution</div>
+          <div class="layer-desc">getElementById() finds specific button, event listener attached</div>
+        </div>
+      </div>
+      
+      <div class="layer">
+        <div class="layer-icon">⚡</div>
+        <div class="layer-content">
+          <div class="layer-title">JavaScript Execution</div>
+          <div class="layer-desc">Event handler function executes, can manipulate DOM, update state</div>
+        </div>
+      </div>
+      
+      <div class="layer">
+        <div class="layer-icon">🔄</div>
+        <div class="layer-content">
+          <div class="layer-title">DOM Updates</div>
+          <div class="layer-desc">Styles change, content updates, visual feedback rendered</div>
+        </div>
+      </div>
+      
+      <div class="layer">
+        <div class="layer-icon">📊</div>
+        <div class="layer-content">
+          <div class="layer-title">Event Logging</div>
+          <div class="layer-desc">Event details logged, timestamps recorded, history maintained</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="flow-arrows">⬇️ Event Flow ⬇️</div>
+    
+    <div class="event-flow">
+      <div class="event-title">🔄 Click Event Lifecycle</div>
+      <div class="event-steps">
+        <div class="event-step">
+          <div class="step-number">1</div>
+          <span>User clicks button with ID "btn-3"</span>
+        </div>
+        <div class="event-step">
+          <div class="step-number">2</div>
+          <span>Browser creates click event object</span>
+        </div>
+        <div class="event-step">
+          <div class="step-number">3</div>
+          <span>Event bubbles up through DOM tree</span>
+        </div>
+        <div class="event-step">
+          <div class="step-number">4</div>
+          <span>getElementById('btn-3') finds target element</span>
+        </div>
+        <div class="event-step">
+          <div class="step-number">5</div>
+          <span>Attached event listener executes</span>
+        </div>
+        <div class="event-step">
+          <div class="step-number">6</div>
+          <span>Button state updates, log entry created</span>
+        </div>
+        <div class="event-step">
+          <div class="step-number">7</div>
+          <span>DOM reflows, visual changes appear</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>` },
   'sample-json':      { lang:'json',  tags:['data','example'],   body:()=>JSON.stringify({
     "name": "Sample API Response",
     "version": "1.0",
@@ -513,7 +1104,6 @@ const MOCK = {
 }
 
 const state = { current:null, currentId:null, registered:{}, generatedFrom:null, generating:false, abortCtrl:null, lastHtml:'' }
-const $ = id => document.getElementById(id)
 const srcdoc = html => `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>${html}</body></html>`
 
 function buildList() {
@@ -546,6 +1136,7 @@ function buildList() {
     
     const d = document.createElement('div')
     d.className = 'snip-item'; d.id = `item-${name}`
+    d.dataset.snippet = name
     d.innerHTML = `
       <input type="checkbox" class="snippet-checkbox" data-snippet="${name}" onchange="updateMultiSelect()" style="margin-right: 8px;">
       <span class="snip-name">${name}</span>
@@ -559,20 +1150,8 @@ function buildList() {
     el.appendChild(d)
   })
   updateMultiSelect()
-}
-
-function selectSnippet(name) {
-  document.querySelectorAll('.snip-item').forEach(i => i.classList.remove('active'))
-  $(`item-${name}`).classList.add('active')
-  $('meta-title').textContent = name
-  $('meta-lang').textContent  = SNIPPETS[name].lang
-  state.current = name; state.currentId = SNIPPETS[name].id || null; state.generatedFrom = null
-  $('body-prompt').value  = SNIPPETS[name].body()
-  $('body-snippet').value = SNIPPETS[name].body()
-  $('meta-tags').value = (SNIPPETS[name].tags || []).join(', ')
-  $('gen-label').style.display   = 'none'
-  $('btn-suggest').style.display = 'none'
   
+<<<<<<< HEAD
   // Update tags panel
   updateTagsPanel(SNIPPETS[name].tags || [])
   
@@ -984,12 +1563,30 @@ async function mindMap() {
       appendLog(`[mind-map] JSON parsed successfully, type: ${typeof jsonData}`,'action')
       const mindMapData = buildJSONMindMap(jsonData, state.current || 'JSON')
       appendLog(`[mind-map] Mindmap created, branches: ${mindMapData.branches.length}`,'action')
+=======
+  // Set up tag filter event listeners
+  const tagFilter = $('tag-filter')
+  if (tagFilter) {
+    tagFilter.addEventListener('input', (e) => {
+      const query = e.target.value.toLowerCase().trim()
+      const items = document.querySelectorAll('.snip-item')
+>>>>>>> main
       
-      // Validate mindmap data structure
-      if (!mindMapData.root || !Array.isArray(mindMapData.branches)) {
-        throw new Error('Invalid mindmap data structure')
-      }
+      items.forEach(item => {
+        const name = item.dataset.snippet
+        const snippet = SNIPPETS[name]
+        if (!snippet) return
+        
+        // Check if snippet matches filter query
+        const matchesName = name.toLowerCase().includes(query)
+        const matchesLang = snippet.lang.toLowerCase().includes(query)
+        const matchesTags = snippet.tags && snippet.tags.some(tag => tag.toLowerCase().includes(query))
+        
+        const isVisible = matchesName || matchesLang || matchesTags
+        item.style.display = isVisible ? 'flex' : 'none'
+      })
       
+<<<<<<< HEAD
       const html = buildMindMapHTML(mindMapData)
       $('body-snippet').value = html
       execute()
@@ -1086,8 +1683,59 @@ function runCode(code, lang, name) {
       state.lastHtml = isFullDoc ? code : srcdoc(code)
       sandbox.srcdoc = state.lastHtml
       appendLog(`[execute] ${name} — done`,'action')
+=======
+      // Show/hide clear button
+      const clearBtn = $('clear-filter')
+      if (clearBtn) {
+        clearBtn.style.display = query ? 'inline-block' : 'none'
+      }
+    })
+    
+    // Set up clear filter button
+    const clearBtn = $('clear-filter')
+    if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+        tagFilter.value = ''
+        tagFilter.dispatchEvent(new Event('input'))
+      })
+>>>>>>> main
     }
+  }
+}
+
+// Initialize application when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  // Build initial UI first
+  buildList()
+  
+  // Load database snippets first, then build UI
+  loadFromDB().then(() => {
+    // Execute startup chain
+    appendLog('[startup] Executing startup chain…','action')
+    setTimeout(() => {
+      appendLog('[startup] Checking for startup-chain snippet…','action')
+      const startupChain = SNIPPETS['startup-chain']
+      if (startupChain) {
+        appendLog('[startup] Found startup-chain, getting names…','action')
+        const names = startupChain.body().split('\n').map(l => l.trim()).filter(Boolean)
+        appendLog(`[startup] Parsed names: ${JSON.stringify(names)}`,'action')
+        executeChain(names, 'startup-chain')
+      } else {
+        // Fallback: select first available snippet
+        appendLog('[startup] No startup-chain found, using fallback','action')
+        const firstSnippet = Object.keys(SNIPPETS)[0]
+        if (firstSnippet) {
+          selectSnippet(firstSnippet)
+          appendLog(`[db] Selected first snippet: ${firstSnippet}`,'action')
+        } else {
+          appendLog(`[db] No snippets available`,'error')
+        }
+      }
+    }, 500) // Small delay to ensure UI is ready
+  }).catch(e => {
+    appendLog(`[startup] Error: ${e.message}`, 'error')
   })
+<<<<<<< HEAD
 }
 
 async function executeChain(names, chainName) {
@@ -1415,6 +2063,9 @@ async function loadFromDB() {
     }
   }, 500) // Small delay to ensure UI is ready
 }
+=======
+})
+>>>>>>> main
 
 // Multi-select functions
 function updateMultiSelect() {
@@ -1569,7 +2220,1299 @@ async function deleteSelected() {
   })
 }
 
-loadFromDB()
+// Tree panel functionality
+const treeState = {
+  expandedNodes: new Set(),
+  selectedNode: null,
+  searchTerm: ''
+}
+
+function categorizeSnippets() {
+  const categories = {
+    'ui-components': {
+      name: 'UI Components',
+      icon: '🎨',
+      snippets: [],
+      subcategories: {}
+    },
+    'events': {
+      name: 'Events',
+      icon: '⚡',
+      snippets: [],
+      subcategories: {}
+    },
+    'data': {
+      name: 'Data',
+      icon: '📊',
+      snippets: [],
+      subcategories: {}
+    },
+    'chains': {
+      name: 'Chains',
+      icon: '🔗',
+      snippets: [],
+      subcategories: {}
+    },
+    'ai': {
+      name: 'AI & Prompts',
+      icon: '🤖',
+      snippets: [],
+      subcategories: {}
+    },
+    'demo': {
+      name: 'Demo',
+      icon: '🎭',
+      snippets: [],
+      subcategories: {}
+    },
+    'other': {
+      name: 'Other',
+      icon: '📄',
+      snippets: [],
+      subcategories: {}
+    }
+  }
+
+  Object.entries(SNIPPETS).forEach(([name, snippet]) => {
+    const tags = snippet.tags || []
+    const lang = snippet.lang
+    
+    // Categorize by tags first
+    if (tags.includes('ui') || tags.includes('buttons')) {
+      categories['ui-components'].snippets.push(name)
+    } else if (tags.includes('events')) {
+      categories['events'].snippets.push(name)
+    } else if (tags.includes('data') || tags.includes('json')) {
+      categories['data'].snippets.push(name)
+    } else if (tags.includes('chain')) {
+      categories['chains'].snippets.push(name)
+    } else if (tags.includes('demo')) {
+      categories['demo'].snippets.push(name)
+    } else if (lang === 'prompt') {
+      categories['ai'].snippets.push(name)
+    } else {
+      // Categorize by language
+      if (lang === 'html' || lang === 'css') {
+        categories['ui-components'].snippets.push(name)
+      } else if (lang === 'js') {
+        categories['events'].snippets.push(name)
+      } else if (lang === 'json') {
+        categories['data'].snippets.push(name)
+      } else if (lang === 'chain') {
+        categories['chains'].snippets.push(name)
+      } else {
+        categories['other'].snippets.push(name)
+      }
+    }
+  })
+
+  return categories
+}
+
+function buildTreeNode(name, data, level = 0) {
+  const hasChildren = data.snippets.length > 0 || Object.keys(data.subcategories).length > 0
+  const isExpanded = treeState.expandedNodes.has(name)
+  
+  const node = document.createElement('div')
+  node.className = 'tree-node'
+  node.dataset.name = name
+  node.dataset.type = 'category'
+  
+  const content = document.createElement('div')
+  content.className = 'tree-node-content'
+  if (treeState.selectedNode === name) {
+    content.classList.add('selected')
+  }
+  
+  const toggle = document.createElement('span')
+  toggle.className = `tree-toggle ${hasChildren ? '' : 'no-children'} ${isExpanded ? 'expanded' : ''}`
+  toggle.textContent = hasChildren ? '▶' : ''
+  
+  const icon = document.createElement('span')
+  icon.className = 'tree-icon'
+  icon.textContent = data.icon
+  
+  const label = document.createElement('span')
+  label.className = 'tree-label'
+  label.textContent = data.name
+  
+  const badge = document.createElement('span')
+  badge.className = 'tree-badge'
+  badge.textContent = data.snippets.length
+  
+  content.appendChild(toggle)
+  content.appendChild(icon)
+  content.appendChild(label)
+  content.appendChild(badge)
+  
+  content.addEventListener('click', () => {
+    if (hasChildren) {
+      toggleNode(name)
+    }
+    selectNode(name, 'category')
+  })
+  
+  node.appendChild(content)
+  
+  if (hasChildren) {
+    const children = document.createElement('div')
+    children.className = `tree-children ${isExpanded ? 'expanded' : ''}`
+    children.id = `children-${name}`
+    
+    // Add snippet nodes
+    data.snippets.forEach(snippetName => {
+      const snippetNode = buildSnippetNode(snippetName, level + 1)
+      children.appendChild(snippetNode)
+    })
+    
+    // Add subcategory nodes
+    Object.entries(data.subcategories).forEach(([subName, subData]) => {
+      const subNode = buildTreeNode(subName, subData, level + 1)
+      children.appendChild(subNode)
+    })
+    
+    node.appendChild(children)
+  }
+  
+  return node
+}
+
+function buildSnippetNode(name, level = 0) {
+  const snippet = SNIPPETS[name]
+  if (!snippet) return document.createElement('div')
+  
+  const node = document.createElement('div')
+  node.className = 'tree-node'
+  node.dataset.name = name
+  node.dataset.type = 'snippet'
+  
+  const content = document.createElement('div')
+  content.className = 'tree-node-content'
+  if (treeState.selectedNode === name) {
+    content.classList.add('selected')
+  }
+  
+  const toggle = document.createElement('span')
+  toggle.className = 'tree-toggle no-children'
+  
+  const icon = document.createElement('span')
+  icon.className = 'tree-icon'
+  icon.textContent = getLanguageIcon(snippet.lang)
+  
+  const label = document.createElement('span')
+  label.className = 'tree-label'
+  label.textContent = name
+  
+  const badge = document.createElement('span')
+  badge.className = 'tree-badge'
+  badge.textContent = snippet.lang.toUpperCase()
+  
+  content.appendChild(toggle)
+  content.appendChild(icon)
+  content.appendChild(label)
+  content.appendChild(badge)
+  
+  content.addEventListener('click', () => {
+    selectNode(name, 'snippet')
+  })
+  
+  node.appendChild(content)
+  return node
+}
+
+function getLanguageIcon(lang) {
+  const icons = {
+    'html': '🌐',
+    'css': '🎨',
+    'js': '⚡',
+    'json': '📊',
+    'prompt': '🤖',
+    'chain': '🔗',
+    'sql': '🗄️',
+    'go': '🔧',
+    'bash': '💻'
+  }
+  return icons[lang] || '📄'
+}
+
+function toggleNode(name) {
+  if (treeState.expandedNodes.has(name)) {
+    treeState.expandedNodes.delete(name)
+  } else {
+    treeState.expandedNodes.add(name)
+  }
+  updateTree()
+}
+
+function selectNode(name, type) {
+  treeState.selectedNode = name
+  
+  if (type === 'snippet') {
+    selectSnippet(name)
+  }
+  
+  updateTree()
+}
+
+function updateTree() {
+  const treeContainer = $('snippet-tree')
+  if (!treeContainer) return
+  
+  treeContainer.innerHTML = ''
+  
+  const categories = categorizeSnippets()
+  const searchTerm = treeState.searchTerm.toLowerCase()
+  
+  Object.entries(categories).forEach(([key, category]) => {
+    if (searchTerm) {
+      // Filter category based on search
+      const filteredSnippets = category.snippets.filter(name => 
+        name.toLowerCase().includes(searchTerm) ||
+        SNIPPETS[name]?.tags?.some(tag => tag.toLowerCase().includes(searchTerm))
+      )
+      
+      if (filteredSnippets.length === 0) return
+      
+      const filteredCategory = { ...category, snippets: filteredSnippets }
+      const node = buildTreeNode(key, filteredCategory)
+      treeContainer.appendChild(node)
+    } else {
+      const node = buildTreeNode(key, category)
+      treeContainer.appendChild(node)
+    }
+  })
+}
+
+function initializeTree() {
+  const searchInput = $('tree-search')
+  const toggleAllBtn = $('tree-toggle-all')
+  
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      treeState.searchTerm = e.target.value
+      updateTree()
+    })
+  }
+  
+  if (toggleAllBtn) {
+    toggleAllBtn.addEventListener('click', () => {
+      const allCategories = Object.keys(categorizeSnippets())
+      if (treeState.expandedNodes.size === allCategories.length) {
+        treeState.expandedNodes.clear()
+      } else {
+        allCategories.forEach(cat => treeState.expandedNodes.add(cat))
+      }
+      updateTree()
+    })
+  }
+  
+  updateTree()
+}
+
+// Initialize tree when DOM is ready
+document.addEventListener('DOMContentLoaded', initializeTree)
+
+// Ooba integration for AI assistance
+let currentController = null
+
+async function generate(mode = null) {
+  const prompt = $('body-prompt').value
+  if (!prompt.trim()) return
+  
+  state.generating = true
+  $('btn-stop-gen').disabled = false
+  
+  // Create abort controller for stopping
+  currentController = new AbortController()
+  
+  // Default to chat mode for character selection, but allow instruct mode
+  const requestMode = mode || 'chat'
+  
+  try {
+    const response = await fetch('/api/ai/generate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        character: 'Melquíades',
+        mode: requestMode,
+        prompt: prompt
+      }),
+      signal: currentController.signal
+    })
+    
+    appendLog(`[AI] Response status: ${response.status} ${response.statusText}`, 'action')
+    appendLog(`[AI] Content-Type: ${response.headers.get('content-type')}`, 'action')
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+    
+    // Handle streaming SSE response from OpenAI API
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder()
+    let fullResponse = ''
+    
+    appendLog('[AI] Reading streaming response...', 'action')
+    
+    try {
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        
+        const chunk = decoder.decode(value, { stream: true })
+        const lines = chunk.split('\n')
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6).trim()
+            
+            if (data === '[DONE]') {
+              appendLog('[AI] Stream completed', 'action')
+              break
+            }
+            
+            try {
+              const parsed = JSON.parse(data)
+              appendLog(`[AI] Parsed JSON: ${JSON.stringify(parsed)}`, 'action')
+              
+              if (parsed.choices && parsed.choices[0] && parsed.choices[0].delta && parsed.choices[0].delta.content) {
+                const content = parsed.choices[0].delta.content
+                fullResponse += content
+                appendLog(`[AI] Received content: "${content}"`, 'action')
+              } else {
+                appendLog(`[AI] No content in parsed structure`, 'action')
+              }
+            } catch (e) {
+              appendLog(`[AI] JSON parse error: ${e.message} - data: ${data.substring(0, 50)}...`, 'action')
+            }
+          }
+        }
+      }
+    } catch (streamError) {
+      appendLog(`[AI] Stream error: ${streamError.message}`, 'error')
+      return null
+    }
+    
+    appendLog(`[AI] Full response: ${fullResponse}`, 'action')
+    return fullResponse || null
+  } catch (error) {
+    appendLog(`[AI] Network Error: ${error.message}`, 'error')
+    appendLog('[AI] Possible causes:', 'error')
+    appendLog('[AI] - Backend server not running', 'error')
+    appendLog('[AI] - /api/ai/generate endpoint not found', 'error')
+    appendLog('[AI] - CORS or network issues', 'error')
+    appendLog('[AI] - Oobabooga not running on localhost:5000', 'error')
+    return null
+  }
+}
+
+// Test function for ooba integration
+async function testMelquiades() {
+  appendLog('[AI] Testing Melquiades character...', 'action')
+  
+  // First debug characters
+  try {
+    const response = await fetch('/api/characters')
+    const data = await response.json()
+    appendLog(`[AI] Available characters: ${JSON.stringify(data)}`, 'action')
+    
+    if (data.characters) {
+      Object.keys(data.characters).forEach(name => {
+        appendLog(`[AI] Character: ${name}`, 'action')
+        if (data.characters[name].system) {
+          const preview = data.characters[name].system.substring(0, 100) + '...'
+          appendLog(`[AI] System preview: ${preview}`, 'action')
+        }
+      })
+    }
+    
+    appendLog(`[AI] Active character: ${data.active}`, 'action')
+  } catch (error) {
+    appendLog(`[AI] Error debugging characters: ${error.message}`, 'error')
+  }
+  
+  // Then test the character
+  const testPrompt = "What is your name and what do you do?"
+  const response = await askMelquiades(testPrompt)
+  
+  if (response) {
+    appendLog('[AI] ✓ Melquiades character is working!', 'action')
+    // Optionally display the response in the snippet editor
+    $('body-snippet').value = response
+    $('meta-lang').textContent = 'html'
+  } else {
+    appendLog('[AI] ✗ Failed to get response from Melquiades', 'error')
+  }
+}
+
+// Debug character selection
+async function debugCharacters() {
+  appendLog('[AI] Debugging character selection...', 'action')
+  
+  try {
+    const response = await fetch('/api/characters')
+    const data = await response.json()
+    appendLog(`[AI] Available characters: ${JSON.stringify(data)}`, 'action')
+    
+    if (data.characters) {
+      Object.keys(data.characters).forEach(name => {
+        appendLog(`[AI] Character: ${name}`, 'action')
+        if (data.characters[name].system) {
+          const preview = data.characters[name].system.substring(0, 100) + '...'
+          appendLog(`[AI] System preview: ${preview}`, 'action')
+        }
+      })
+    }
+    
+    appendLog(`[AI] Active character: ${data.active}`, 'action')
+  } catch (error) {
+    appendLog(`[AI] Error debugging characters: ${error.message}`, 'error')
+  }
+}
+
+function appendLog(msg, type = 'info') {
+  const log = $('log')
+  if (!log) return
+  const entry = document.createElement('div')
+  entry.className = `log-${type}`
+  entry.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`
+  log.appendChild(entry)
+  log.scrollTop = log.scrollHeight
+}
+
+function newSnippet() {
+  const name = prompt('Snippet name:')
+  if (!name) return
+  
+  const lang = prompt('Language (js,css,html,json,yaml,bash,sql,go,python,dockerfile,kubernetes,prompt):', 'js')
+  if (!lang) return
+  
+  SNIPPETS[name] = {
+    lang: lang,
+    tags: [],
+    body: () => ''
+  }
+  
+  buildList()
+  selectSnippet(name)
+  appendLog(`Created new snippet: ${name}`, 'action')
+}
+
+function switchTab(tab) {
+  // Update tab buttons
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === tab)
+  })
+  
+  // Update tab content
+  document.querySelectorAll('.screen').forEach(content => {
+    content.style.display = content.id === `screen-${tab}` ? 'flex' : 'none'
+  })
+  
+  appendLog(`Switched to ${tab} tab`, 'action')
+}
+
+async function save() {
+  const name = state.current
+  if (!name) return
+  
+  const snippet = SNIPPETS[name]
+  if (!snippet) return
+  
+  const ta = $('body-snippet')
+  if (!ta) return
+  
+  try {
+    // Update the snippet body locally
+    snippet.body = () => ta.value
+    
+    // Prepare request payload
+    const payload = {
+      name: name,
+      language: snippet.lang,
+      tags: snippet.tags,
+      body: ta.value
+    }
+    console.log('Save payload:', payload)
+    
+    // Check if snippet exists in database (has an ID)
+    const snippetId = state.registered[name]
+    let response
+    
+    if (snippetId) {
+      // Update existing snippet
+      console.log('Updating existing snippet with ID:', snippetId)
+      response = await fetch(`/api/snippets/${snippetId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      })
+    } else {
+      // Create new snippet
+      console.log('Creating new snippet')
+      response = await fetch('/api/snippets', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      })
+    }
+    
+    console.log('Save response status:', response.status)
+    console.log('Save response headers:', response.headers)
+    
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('Save error response:', errorText)
+      throw new Error(`HTTP ${response.status}: ${errorText}`)
+    }
+    
+    const responseData = await response.json()
+    console.log('Save response data:', responseData)
+    
+    // Update registry with new ID if it was created
+    if (responseData.id && !snippetId) {
+      state.registered[name] = responseData.id
+    }
+    
+    appendLog(`Saved snippet: ${name}`, 'action')
+  } catch (e) {
+    console.error('Save error:', e)
+    appendLog(`Error saving snippet: ${e.message}`, 'error')
+  }
+}
+
+async function saveAs() {
+  const oldName = state.current
+  if (!oldName) return
+  
+  const newName = prompt('Save as:', oldName)
+  if (!newName || newName === oldName) return
+  
+  const oldSnippet = SNIPPETS[oldName]
+  if (!oldSnippet) return
+  
+  const ta = $('body-snippet')
+  if (!ta) return
+  
+  try {
+    // Create new snippet with updated content
+    const newSnippet = {
+      ...oldSnippet,
+      body: () => ta.value
+    }
+    
+    // Save to database
+    const response = await fetch('/api/snippets', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name: newName,
+        language: newSnippet.lang,
+        tags: newSnippet.tags,
+        body: ta.value
+      })
+    })
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`)
+    }
+    
+    // Update local snippets
+    SNIPPETS[newName] = newSnippet
+    
+    buildList()
+    selectSnippet(newName)
+    appendLog(`Saved snippet as: ${newName}`, 'action')
+  } catch (e) {
+    appendLog(`Error saving snippet: ${e.message}`, 'error')
+  }
+}
+
+function execute() {
+  const name = state.current
+  if (!name) return
+  
+  const snippet = SNIPPETS[name]
+  if (!snippet) return
+  
+  // Handle chains differently
+  if (snippet.lang === 'chain') {
+    const chainContent = snippet.body ? (typeof snippet.body === 'function' ? snippet.body() : snippet.body) : ''
+    const names = chainContent.split('\n').map(l => l.trim()).filter(Boolean)
+    if (names.length > 0) {
+      appendLog(`[chain] Executing chain "${name}" with ${names.length} snippets`, 'action')
+      executeChain(names, name)
+    }
+    return
+  }
+  
+  // Read current content from textarea, not cached snippet body
+  const ta = $('body-snippet')
+  const code = ta ? ta.value.trim() : ''
+  if (!code) return
+  
+  appendLog(`Executing ${name} (${snippet.lang})`, 'action')
+  
+  switchTab('run')
+  const sandbox = $('sandbox')
+  if (sandbox) {
+    if (snippet.lang === 'html') {
+      sandbox.srcdoc = code
+    } else if (snippet.lang === 'js') {
+      sandbox.srcdoc = `<script>${code}<${'/'+'script'}>`
+    } else {
+      sandbox.srcdoc = `<pre>${code}</pre>`
+    }
+  }
+}
+
+function register() {
+  const name = state.current
+  if (!name) return
+  
+  appendLog(`Registering snippet: ${name}`, 'action')
+  // Registration logic would go here
+}
+
+function deleteSnippet() {
+  const name = state.current
+  if (!name) return
+  
+  if (!confirm(`Delete snippet "${name}"?`)) return
+  
+  delete SNIPPETS[name]
+  buildList()
+  
+  // Select first available snippet
+  const first = Object.keys(SNIPPETS)[0]
+  if (first) {
+    selectSnippet(first)
+  }
+  
+  appendLog(`Deleted snippet: ${name}`, 'action')
+}
+
+function toggleSelectAll() {
+  const selectAll = $('select-all')
+  const checkboxes = document.querySelectorAll('.snippet-checkbox')
+  
+  checkboxes.forEach(cb => cb.checked = selectAll.checked)
+  updateMultiSelect()
+}
+
+async function generate() {
+  const raw = $('body-prompt').value.trim()
+  if (!raw) { appendLog('prompt is empty','error'); return }
+  let { resolved: prompt, refs } = resolveContext(raw)
+  if (refs.length) appendLog(`[generate] context: ${refs.map(r=>'@'+r).join(', ')}`,'action')
+  const snippetBody = $('body-snippet').value.trim()
+  if (snippetBody) {
+    prompt += `\n\n[Current snippet: ${state.current}]\n${snippetBody}`
+    appendLog(`[generate] auto-context: snippet ${state.current}`,'action')
+  }
+  const system = $('chk-code-only').checked
+    ? 'You output ONLY raw code. No explanation, no comments, no markdown fences, no backticks. Start with the first line of code. Stop after the last line of code. Never add any text after the code.'
+    : ''
+  const src = state.current
+  switchTab('snippet')
+  const ta = $('body-snippet')
+  state.prevSnippet = ta.value
+  ta.value = ''
+  setChain([src, 'streaming…'])
+  state.generating = true; state.abortCtrl = new AbortController()
+  $('btn-stop-gen').disabled = false
+
+  let resp
+  try {
+    resp = await fetch('/api/ai/generate', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({prompt, system, character: 'Melquíades', mode: 'chat'}),
+      signal: state.abortCtrl.signal
+    })
+  } catch (e) {
+    appendLog(`[generate] network error: ${e.message}`,'error')
+    state.generating = false; $('btn-stop-gen').disabled = true
+    return
+  }
+
+  if (!resp.ok) { appendLog(`[generate] ${resp.status} ${resp.statusText}`,'error'); state.generating = false; $('btn-stop-gen').disabled = true; return }
+
+  const reader = resp.body.getReader(), dec = new TextDecoder()
+  let buf = ''
+  try {
+    while (true) {
+      const {done, value} = await reader.read()
+      if (done) break
+      const chunk = dec.decode(value, {stream: true})
+      buf += chunk
+      const lines = buf.split('\n'); buf = lines.pop()
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue
+        const payload = line.slice(6)
+        if (payload === '[DONE]') { finishGenerate(src); return }
+        try {
+          const parsed = JSON.parse(payload)
+          const token = parsed?.choices?.[0]?.delta?.content
+          if (token) {
+            ta.value += token; ta.scrollTop = ta.scrollHeight
+          }
+        } catch (e) {
+          // Skip malformed JSON
+        }
+      }
+    }
+  } catch (e) {
+    if (e.name !== 'AbortError') {
+      // Handle stream errors silently
+    }
+    state.generating = false; $('btn-stop-gen').disabled = true; return
+  }
+  finishGenerate(src)
+}
+
+function stopGenerate() {
+  if (currentController) {
+    currentController.abort()
+    currentController = null
+  }
+  state.generating = false
+  $('btn-stop-gen').disabled = true
+  appendLog('Generation stopped by user', 'action')
+}
+
+function finishGenerate(src) {
+  state.generating = false
+  $('btn-stop-gen').disabled = true
+  currentController = null
+  const ta = $('body-snippet')
+  const content = ta.value.trim()
+  if (content) {
+    setChain([src, 'generated'])
+    appendLog(`[generate] finished ${content.length} chars`,'action')
+  } else {
+    setChain([src])
+    appendLog('[generate] no content generated','warning')
+  }
+}
+
+function stopGenerate() {
+  state.abortCtrl?.abort()
+  state.generating = false
+  $('btn-stop-gen').disabled = true
+  if (state.prevSnippet && !$('body-snippet').value.trim()) {
+    $('body-snippet').value = state.prevSnippet
+  }
+  appendLog('[generate] stopped','action')
+}
+
+function stop() {
+  const sandbox = $('sandbox')
+  if (sandbox) {
+    sandbox.srcdoc = ''
+  }
+  appendLog('[run] stopped','action')
+}
+
+function changeLang() {
+  const name = state.current
+  if (!name) return
+  
+  const snippet = SNIPPETS[name]
+  if (!snippet) return
+  
+  const newLang = prompt('Language (js,css,html,json,yaml,bash,sql,go,python,dockerfile,kubernetes,prompt):', snippet.lang)
+  if (!newLang || newLang === snippet.lang) return
+  
+  snippet.lang = newLang
+  buildList()
+  appendLog(`Changed ${name} language to ${newLang}`, 'action')
+}
+
+function insertCtx(picker) {
+  const name = picker.value
+  if (!name) return
+  
+  const ta = $('body-prompt')
+  const pos = ta.selectionStart
+  const val = ta.value
+  const ins = (pos > 0 && val[pos-1] !== ' ' && val[pos-1] !== '\n') ? ` @${name}` : `@${name}`
+  ta.value = val.slice(0, pos) + ins + val.slice(pos)
+  ta.selectionStart = ta.selectionEnd = pos + ins.length
+  ta.focus()
+  picker.value = ''
+}
+
+function resolveContext(text) {
+  const refs = []
+  const resolved = text.replace(/@(\w+)/g, (match, name) => {
+    const snippet = SNIPPETS[name]
+    if (snippet) {
+      refs.push(name)
+      return snippet.body() || ''
+    }
+    return match
+  })
+  return { resolved, refs }
+}
+
+function debugCharacters() {
+  appendLog('[AI] Debugging character configuration...', 'action')
+  try {
+    const response = fetch('/api/ai/debug', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'}
+    }).then(resp => resp.json())
+    .then(data => {
+      appendLog(`[AI] Debug info: ${JSON.stringify(data, null, 2)}`, 'action')
+    })
+  } catch (error) {
+    appendLog(`[AI] Error debugging characters: ${error.message}`, 'error')
+  }
+}
+
+function testMelquiades() {
+  appendLog('[AI] Testing Melquíades connection...', 'action')
+  generate()
+}
+
+function mindMap() {
+  const prompt = $('body-prompt').value.trim()
+  if (!prompt) { appendLog('prompt is empty for mind map','error'); return }
+  
+  appendLog('[AI] Generating mind map...', 'action')
+  
+  fetch('/api/ai/mindmap', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({prompt})
+  })
+  .then(resp => resp.json())
+  .then(data => {
+    appendLog('[AI] Mind map generated', 'action')
+    // Display mind map logic would go here
+  })
+  .catch(e => {
+    appendLog(`[AI] Mind map error: ${e.message}`, 'error')
+  })
+}
+
+function revise() {
+  appendLog('[AI] Revising current snippet...', 'action')
+  const current = state.current
+  if (!current) return
+  
+  const snippet = SNIPPETS[current]
+  if (!snippet) return
+  
+  const prompt = `Please revise and improve this ${snippet.lang} code:\n\n${snippet.body()}`
+  $('body-prompt').value = prompt
+  generate()
+}
+
+function explain() {
+  appendLog('[AI] Explaining current snippet...', 'action')
+  const current = state.current
+  if (!current) return
+  
+  const snippet = SNIPPETS[current]
+  if (!snippet) return
+  
+  const prompt = `Please explain this ${snippet.lang} code:\n\n${snippet.body()}`
+  $('body-prompt').value = prompt
+  generate()
+}
+
+function askQuestions() {
+  appendLog('[AI] Asking questions about current snippet...', 'action')
+  const current = state.current
+  if (!current) return
+  
+  const snippet = SNIPPETS[current]
+  if (!snippet) return
+  
+  const prompt = `What are the key questions I should ask about this ${snippet.lang} code?\n\n${snippet.body()}`
+  $('body-prompt').value = prompt
+  generate()
+}
+
+function clickChip(text) {
+  $('body-prompt').value = text
+  generate()
+}
+
+function reflect() {
+  appendLog('[AI] Reflecting on current snippet...', 'action')
+  const current = state.current
+  if (!current) return
+  
+  const snippet = SNIPPETS[current]
+  if (!snippet) return
+  
+  const prompt = `Please reflect on this ${snippet.lang} code and suggest improvements:\n\n${snippet.body()}`
+  $('body-prompt').value = prompt
+  generate()
+}
+
+function selectSnippet(name) {
+  state.current = name
+  const snippet = SNIPPETS[name]
+  if (!snippet) return
+  
+  // Update UI
+  document.querySelectorAll('.snip-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.snippet === name)
+  })
+  
+  // Update editor
+  const ta = $('body-snippet')
+  if (ta) {
+    // Handle both string body (from DB) and function body (local)
+    const content = snippet.body ? (typeof snippet.body === 'function' ? snippet.body() : snippet.body) : ''
+    ta.value = content
+    
+    // Make sure we're on the snippet tab
+    switchTab('snippet')
+  }
+  
+  // Update context picker
+  const picker = $('ctx-picker')
+  if (picker) {
+    picker.value = ''
+  }
+  
+  // Update title
+  const title = $('meta-title')
+  if (title) {
+    title.textContent = name
+  }
+  
+  // Update language badge
+  const langBadge = $('meta-lang')
+  if (langBadge && snippet.lang) {
+    langBadge.textContent = snippet.lang
+  }
+  
+  }
+
+function setChain(names) {
+  state.chain = names
+  const chainEl = $('chain-display')
+  if (chainEl) {
+    chainEl.textContent = names.join(' → ')
+    chainEl.style.display = names.length > 0 ? 'block' : 'none'
+  }
+}
+
+function executeChain(names, source) {
+  console.log('executeChain called with:', names, source)
+  appendLog(`[chain] Executing ${names.length} snippets from ${source}`, 'action')
+  appendLog(`[chain] Snippet names: ${JSON.stringify(names)}`, 'action')
+  setChain(names)
+  
+  // Collect all browser-safe snippets for combined execution
+  const htmlSnippets = []
+  const cssSnippets = []
+  const jsSnippets = []
+  const otherSnippets = []
+  
+  names.forEach(name => {
+    const snippet = SNIPPETS[name]
+    if (!snippet) {
+      appendLog(`[chain] Snippet not found: ${name}`, 'error')
+      return
+    }
+    
+    switch (snippet.lang) {
+      case 'html':
+        htmlSnippets.push(snippet)
+        break
+      case 'css':
+        cssSnippets.push(snippet)
+        break
+      case 'js':
+        jsSnippets.push(snippet)
+        break
+      default:
+        otherSnippets.push(snippet)
+    }
+  })
+  
+  // Combine HTML, CSS, and JS into single execution
+  if (htmlSnippets.length > 0 || cssSnippets.length > 0 || jsSnippets.length > 0) {
+    appendLog(`[chain] Combining ${htmlSnippets.length} HTML, ${cssSnippets.length} CSS, ${jsSnippets.length} JS snippets`, 'action')
+    
+    let combinedContent = ''
+    
+    // Add HTML content
+    htmlSnippets.forEach(snippet => {
+      const code = snippet.body()
+      if (code) combinedContent += code
+    })
+    
+    // Add CSS in style tags
+    if (cssSnippets.length > 0) {
+      combinedContent += '<style>\n'
+      cssSnippets.forEach(snippet => {
+        const code = snippet.body()
+        if (code) combinedContent += code + '\n'
+      })
+      combinedContent += '</style>\n'
+    }
+    
+    // Add JS in script tags
+    if (jsSnippets.length > 0) {
+      combinedContent += '<script>\n'
+      jsSnippets.forEach(snippet => {
+        const code = snippet.body()
+        if (code) combinedContent += code + '\n'
+      })
+      combinedContent += '<\/script>\n'
+    }
+    
+    // Execute combined content in sandbox
+    appendLog(`[chain] Executing combined content (${combinedContent.length} chars)`, 'action')
+    switchTab('run')
+    const sandbox = $('sandbox')
+    if (sandbox) {
+      sandbox.srcdoc = combinedContent
+    }
+  }
+  
+  // Handle non-browser-safe snippets (just log for now)
+  otherSnippets.forEach(snippet => {
+    appendLog(`[chain] Skipping non-browser-safe snippet: ${snippet.name} (${snippet.lang})`, 'warning')
+  })
+  
+  appendLog(`[chain] Chain completed`, 'action')
+}
+
+async function loadFromDB() {
+  try {
+    const resp = await fetch('/api/snippets')
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
+    const data = await resp.json()
+    console.log('Database response:', data)
+    
+    // Handle API response - it's an array of snippets, not an object with snippets property
+    const snippets = Array.isArray(data) ? data : (data.snippets || [])
+    
+    // Merge database snippets with local SNIPPETS, preserving local bodies
+    snippets.forEach(dbSnippet => {
+      const name = dbSnippet.name
+      if (!name) return
+      
+      // Convert string body to function for consistency with local snippets
+      const normalizedSnippet = {
+        ...dbSnippet,
+        lang: dbSnippet.language || dbSnippet.lang || 'js', // Handle both language fields
+        body: typeof dbSnippet.body === 'function' ? dbSnippet.body : () => dbSnippet.body || ''
+      }
+      
+      // Always preserve local snippets, only add new ones from database
+      if (!SNIPPETS[name]) {
+        console.log(`Adding new database snippet: ${name}`)
+        SNIPPETS[name] = normalizedSnippet
+      } else {
+        console.log(`Preserving local snippet: ${name}`)
+        // Update registry for existing local snippet
+        if (dbSnippet.id) {
+          state.registered[name] = dbSnippet.id
+        }
+      }
+      
+      // Update registry with snippet ID
+      if (dbSnippet.id) {
+        state.registered[name] = dbSnippet.id
+        console.log(`Registered snippet ${name} with ID ${dbSnippet.id}`)
+      }
+    })
+    
+    buildList()
+    updateRegistry()
+    console.log('Registry after load:', state.registered)
+  } catch (e) {
+    appendLog(`[db] Failed to load: ${e.message}`, 'error')
+  }
+}
+
+// Missing functions that are called but not defined
+function newSnippet() {
+  const name = prompt('New snippet name:')
+  if (!name) return
+  
+  SNIPPETS[name] = {
+    lang: 'js',
+    tags: [],
+    body: () => ''
+  }
+  
+  buildList()
+  selectSnippet(name)
+  appendLog(`Created new snippet: ${name}`, 'action')
+}
+
+function register() {
+  const name = state.current
+  if (!name) return
+  
+  appendLog(`Registering snippet: ${name}`, 'action')
+}
+
+function stop() {
+  appendLog('Execution stopped', 'action')
+}
+
+function stopGenerate() {
+  if (state.generateController) {
+    state.generateController.abort()
+    state.generateController = null
+  }
+  state.generating = false
+  $('btn-stop-gen').disabled = true
+  appendLog('Generation stopped', 'action')
+}
+
+function finishGenerate(src) {
+  state.generating = false
+  $('btn-stop-gen').disabled = true
+  appendLog('Generation completed', 'action')
+}
+
+function mindMap() {
+  appendLog('Mind map feature not implemented', 'action')
+}
+
+function revise() {
+  appendLog('Revise feature not implemented', 'action')
+}
+
+function explain() {
+  appendLog('Explain feature not implemented', 'action')
+}
+
+function askQuestions() {
+  appendLog('Ask questions feature not implemented', 'action')
+}
+
+function clickChip(text) {
+  $('body-prompt').value = text
+  switchTab('prompt')
+}
+
+function reflect() {
+  appendLog('Reflect feature not implemented', 'action')
+}
+
+function changeLang() {
+  const snippet = SNIPPETS[state.current]
+  if (!snippet) return
+  
+  const langs = ['js', 'css', 'html', 'markdown', 'json', 'yaml', 'bash', 'sql', 'go', 'python', 'dockerfile', 'kubernetes', 'prompt']
+  const current = snippet.lang || 'js'
+  const currentIndex = langs.indexOf(current)
+  const next = langs[(currentIndex + 1) % langs.length]
+  
+  snippet.lang = next
+  $('meta-lang').textContent = next
+  appendLog(`Changed language to: ${next}`, 'action')
+}
+
+function insertCtx(select) {
+  if (!select.value) return
+  const snippet = SNIPPETS[select.value]
+  if (!snippet) return
+  
+  const ta = $('body-prompt')
+  const cursor = ta.selectionStart
+  const text = ta.value
+  ta.value = text.slice(0, cursor) + `@${select.value}` + text.slice(cursor)
+  ta.selectionStart = ta.selectionEnd = cursor + select.value.length + 1
+  ta.focus()
+  
+  select.value = ''
+}
+
+function toggleSelectAll() {
+  const checkboxes = document.querySelectorAll('.snippet-checkbox')
+  const selectAll = document.getElementById('select-all')
+  
+  checkboxes.forEach(cb => {
+    cb.checked = selectAll.checked
+  })
+  
+  updateMultiSelect()
+}
+
+function chainSelected() {
+  const selected = Array.from(document.querySelectorAll('.snippet-checkbox:checked'))
+    .map(cb => cb.dataset.snippet)
+  
+  if (selected.length === 0) return
+  
+  const chainName = prompt('Chain name:')
+  if (!chainName) return
+  
+  SNIPPETS[chainName] = {
+    lang: 'prompt',
+    tags: ['chain'],
+    body: () => selected.join('\n')
+  }
+  
+  buildList()
+  appendLog(`Created chain: ${chainName}`, 'action')
+}
+
+function deleteSelected() {
+  const selected = Array.from(document.querySelectorAll('.snippet-checkbox:checked'))
+    .map(cb => cb.dataset.snippet)
+  
+  if (selected.length === 0) return
+  if (!confirm(`Delete ${selected.length} snippets?`)) return
+  
+  selected.forEach(name => {
+    delete SNIPPETS[name]
+  })
+  
+  buildList()
+  appendLog(`Deleted ${selected.length} snippets`, 'action')
+}
+
+function testMelquiades() {
+  appendLog('Testing Melquíades...', 'action')
+  generate()
+}
+
+function testInstructMode() {
+  appendLog('Testing instruct mode (OpenAI format)...', 'action')
+  generate('instruct')
+}
+
+function debugCharacters() {
+  appendLog('Debugging characters...', 'action')
+  fetch('/api/characters')
+    .then(resp => resp.json())
+    .then(data => {
+      console.log('Characters:', data)
+      appendLog(`Found ${data.characters?.length || 0} characters`, 'action')
+    })
+    .catch(e => {
+      appendLog(`Error: ${e.message}`, 'error')
+    })
+}
+
+function suggestNext() {
+  appendLog('Suggest next feature not implemented', 'action')
+}
+
 </script>
 </body>
 </html>
