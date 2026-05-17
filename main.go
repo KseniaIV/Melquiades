@@ -31,6 +31,10 @@ func main() {
 	http.Handle("/api/characters", handlers.Characters())
 	fs := http.FileServer(http.Dir("."))
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/staging" {
+			http.Redirect(w, r, "/index.html", http.StatusFound)
+			return
+		}
 		if r.URL.Path == "/" {
 			http.Redirect(w, r, "/demo-panel.html", http.StatusFound)
 			return
