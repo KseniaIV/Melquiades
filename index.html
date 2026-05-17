@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Melquíades — Demo</title>
+<link rel="stylesheet" href="/css/styles.css">
+<script  src="/js/app.js"></script>
+</head>
+<body>
+
+<header>
+  <h1>🔮 Melquíades</h1>
+  <div class="chain" id="chain">select a snippet to begin</div>
+  <div class="ai-label"><div class="ai-dot"></div>mistral-7b · :5000</div>
+</header>
+
+<main>
+  <!-- LEFT: snippet list -->
+  <div class="col">
+    <div class="col-header" style="display:flex;justify-content:space-between;align-items:center">Snippets
+      <button class="btn btn-plain btn-sm" onclick="newSnippet()">+ New</button>
+    </div>
+    <div class="multi-select-controls" id="multi-controls" style="display:none; padding: 8px 12px; border-bottom: 1px solid var(--border); gap: 8px; align-items: center;">
+      <label style="font-size: 11px; color: var(--muted);">
+        <input type="checkbox" id="select-all" onchange="toggleSelectAll()"> Select all
+      </label>
+      <button class="btn btn-plain btn-sm" onclick="chainSelected()">Chain</button>
+      <button class="btn btn-plain btn-sm" onclick="deleteSelected()" style="color: var(--danger);">Delete</button>
+      <span style="font-size: 11px; color: var(--muted);" id="selection-count">0 selected</span>
+    </div>
+    <div id="snip-list" style="flex: 1; overflow-y: auto;"></div>
+    <div class="col-header">Tags</div>
+    <div id="tags-panel" style="padding: 8px 12px; flex-shrink: 0;">
+      <div class="tags-row">
+        <input id="tag-filter" type="text" placeholder="Filter by tag or type..." style="flex: 1; background: transparent; border: none; color: var(--muted); font: 11px/1.4 system-ui; outline: none;">
+        <button id="clear-filter" class="btn btn-sm" style="display: none; padding: 2px 6px; font-size: 10px; background: var(--bg3); color: var(--muted); border: 1px solid var(--border); border-radius: 3px; cursor: pointer;">Clear</button>
+      </div>
+      <div id="snippet-tags" style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px;">
+        <span style="font-size: 11px; color: var(--muted);">Select a snippet to see tags</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTER: editor -->
+  <div class="col">
+    <div class="meta-row">
+      <span class="meta-title" id="meta-title">—</span>
+      <span class="badge" id="meta-lang" onclick="changeLang()" title="Click to change language" style="cursor:pointer">—</span>
+    </div>
+    <div class="tags-row">
+      <input id="meta-tags" placeholder="tags: ui, timer, deploy…" spellcheck="false">
+    </div>
+    <div class="tabs">
+      <div class="tab active" id="tab-prompt"  onclick="switchTab('prompt')">Prompt</div>
+      <div class="tab"        id="tab-snippet" onclick="switchTab('snippet')">Snippet</div>
+      <div class="tab"        id="tab-run"     onclick="switchTab('run')">Run</div>
+    </div>
+
+    <div id="screen-prompt" class="screen active">
+      <textarea id="body-prompt" spellcheck="false" placeholder="Describe what you want to build…"></textarea>
+      <div class="actions">
+        <button class="btn btn-accent" onclick="generate()">Generate ▸</button>
+        <label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;cursor:pointer">
+          <input type="checkbox" id="chk-code-only" checked> code only
+        </label>
+        <select id="ctx-picker" onchange="insertCtx(this)" style="background:var(--bg3);border:1px solid var(--border);color:var(--muted);font-size:11px;border-radius:3px;padding:2px 4px;cursor:pointer">
+          <option value="">@ insert snippet…</option>
+        </select>
+        <button class="btn btn-plain" onclick="save()">Save</button>
+        <button class="btn btn-plain" onclick="saveAs()">Save As</button>
+      </div>
+    </div>
+
+    <div id="screen-snippet" class="screen">
+      <textarea id="body-snippet" spellcheck="false" placeholder="Snippet code appears here…"></textarea>
+      <div class="gen-label" id="gen-label">✦ generated from <span id="gen-from"></span></div>
+      <div class="actions">
+        <button class="btn btn-teal"    onclick="execute()">Execute ▸</button>
+        <button class="btn btn-plain" onclick="save()">Save</button>
+        <button class="btn btn-plain" onclick="saveAs()">Save As</button>
+        <button class="btn btn-accent"  onclick="register()">Register</button>
+        <button class="btn btn-plain" id="btn-stop-gen" onclick="stopGenerate()" disabled style="color:#f87171">Stop ■</button>
+        <button class="btn btn-plain" onclick="deleteSnippet()" style="color:#f87171">Delete</button>
+        <button class="btn btn-plain" id="btn-mindmap" onclick="mindMap()">Mind map</button>
+        <button class="btn btn-suggest" id="btn-suggest" style="display:none" onclick="suggestNext()">Suggest next snippet</button>
+      </div>
+    </div>
+
+    <div id="screen-run" class="screen">
+      <iframe id="sandbox" sandbox="allow-scripts"></iframe>
+      <div class="log-area" id="log"></div>
+      <div class="actions">
+        <button class="btn btn-teal" onclick="execute()">Execute ▸</button>
+        <button class="btn btn-plain" onclick="stop()">Stop ■</button>
+        <button class="btn btn-plain" onclick="$('log').innerHTML=''">Clear log</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: AI sidebar -->
+  <div class="col">
+    <div class="col-header">🤖 Melquíades</div>
+    <div class="ai-sidebar">
+
+      <div class="ai-section">
+        <div class="ai-section-title">Actions</div>
+        <div class="ai-actions">
+          <button class="btn btn-accent" onclick="generate()">Generate ▸</button>
+          <button class="btn btn-plain"  onclick="debugCharacters()">Debug Chars ▸</button>
+          <button class="btn btn-plain"  onclick="revise()">Revise</button>
+          <button class="btn btn-plain"  onclick="explain()">Explain</button>
+        </div>
+      </div>
+
+      <div class="ai-section">
+        <div class="ai-section-title">Output</div>
+        <div class="ai-output" id="ai-output">Waiting for action…</div>
+      </div>
+
+      <div class="ai-section">
+        <div class="ai-section-title">
+          Questions
+          <button class="btn btn-plain btn-sm" onclick="askQuestions()">Ask</button>
+        </div>
+        <div class="chip-list" id="chip-list">
+          <div class="chip" onclick="clickChip(this.textContent)">What are the failure modes?</div>
+          <div class="chip" onclick="clickChip(this.textContent)">What should chain next?</div>
+          <div class="chip" onclick="clickChip(this.textContent)">How would you test this?</div>
+        </div>
+      </div>
+
+      <div class="ai-section">
+        <div class="ai-section-title">
+          Reflection
+          <button class="btn btn-plain btn-sm" onclick="reflect()">Reflect</button>
+        </div>
+        <div id="reflection-list">
+          <div class="reflect-item">No error handling on exec calls</div>
+          <div class="reflect-item">Mock actions not confirmed before destructive ops</div>
+        </div>
+      </div>
+
+      <div class="ai-section grow">
+        <div class="ai-section-title">Registered Panels</div>
+        <div class="panels-area" id="panels-area">
+          <div class="empty-msg">Register a snippet to add it here as a live panel.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="sidebar">
+    <h2>Snippets</h2>
+    <div id="registry-bar"></div>
+    <div class="tree-controls">
+      <input type="text" id="tree-search" placeholder="Search snippets..." class="search-input">
+      <button id="tree-toggle-all" class="btn-small">Toggle All</button>
+    </div>
+    <div id="snippet-tree" class="snippet-tree"></div>
+    <div id="snippets-list" class="snippets-list" style="display: none;"></div>
+  </div>
+  <span id="registry-empty" style="font-size:11px;color:#333">— no registered snippets yet</span>
+</footer>
+
+
+</body>
+</html>
