@@ -30,17 +30,7 @@ func main() {
 	http.Handle("/api/ai/mindmap", handlers.MindMap())
 	http.Handle("/api/characters", handlers.Characters())
 	fs := http.FileServer(http.Dir("."))
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/staging" {
-			http.Redirect(w, r, "/index.html", http.StatusFound)
-			return
-		}
-		if r.URL.Path == "/" {
-			http.Redirect(w, r, "/demo-panel.html", http.StatusFound)
-			return
-		}
-		fs.ServeHTTP(w, r)
-	})
-	log.Println("listening on http://localhost:8091")
-	log.Fatal(http.ListenAndServe(":8091", nil))
+	http.Handle("/", fs)
+	log.Println("listening on http://localhost:8092")
+	log.Fatal(http.ListenAndServe(":8092", nil))
 }
