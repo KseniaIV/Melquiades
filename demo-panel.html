@@ -1118,6 +1118,9 @@ function buildList() {
   const filterTags = tagFilter ? tagFilter.split(',').map(t => t.trim()).filter(Boolean) : []
   
   Object.keys(SNIPPETS).forEach(name => {
+    // Skip if snippet is undefined
+    if (!SNIPPETS[name]) return
+    
     // Apply tag filter
     if (filterTags.length > 0) {
       const snippetTags = (SNIPPETS[name].tags || []).map(t => t.toLowerCase())
@@ -1987,24 +1990,32 @@ async function loadFromDB() {
 // Initialize application when DOM is ready
 document.addEventListener('DOMContentLoaded', async () => {
   buildList()
-  await loadFromDB()
+  try {
+    await loadFromDB()
+  } catch (e) {
+    appendLog(`[startup] loadFromDB failed: ${e.message}`, 'error')
+  }
 
-  // Execute startup chain after snippets are loaded
-  appendLog('[startup] Executing startup chain…', 'action')
-  setTimeout(() => {
+  // Explicitly run startup-chain here so it cannot be skipped by
+  // duplicate-function hoisting overriding loadFromDB's internal trigger.
+  setTimeout(async () => {
     const startupChain = SNIPPETS['startup-chain']
     if (startupChain) {
       const body = typeof startupChain.body === 'function' ? startupChain.body() : (startupChain.body || '')
       const names = body.split('\n').map(l => l.trim()).filter(Boolean)
-      appendLog(`[startup] Found startup-chain → ${names.join(' → ')}`, 'action')
-      executeChain(names, 'startup-chain')
+      appendLog(`[startup] startup-chain → ${names.join(' → ')}`, 'action')
+      try {
+        await executeChain(names, 'startup-chain')
+      } catch (e) {
+        appendLog(`[startup] executeChain error: ${e.message}`, 'error')
+      }
     } else {
-      const firstSnippet = Object.keys(SNIPPETS)[0]
-      if (firstSnippet) {
-        selectSnippet(firstSnippet)
-        appendLog(`[startup] No startup-chain; selected ${firstSnippet}`, 'action')
+      const first = Object.keys(SNIPPETS)[0]
+      if (first) {
+        selectSnippet(first)
+        appendLog(`[startup] no startup-chain; selected ${first}`, 'action')
       } else {
-        appendLog('[startup] No snippets available', 'error')
+        appendLog('[startup] no snippets available', 'error')
       }
     }
   }, 200)
@@ -2712,7 +2723,38 @@ async function save() {
     if (!response.ok) {
       const errorText = await response.text()
       console.error('Save error response:', errorText)
-      throw new Error(`HTTP ${response.status}: ${errorText}`)
+      
+      // Handle duplicate key error by trying to find existing snippet
+      if (response.status === 500 && errorText.includes('duplicate key value violates unique constraint')) {
+        console.log('Duplicate key error, trying to find existing snippet...')
+        try {
+          const listResp = await fetch('/api/snippets')
+          if (listResp.ok) {
+            const snippets = await listResp.json()
+            const existingSnippet = snippets.find(s => s.name === name)
+            if (existingSnippet) {
+              console.log('Found existing snippet, updating instead:', existingSnippet.id)
+              state.registered[name] = existingSnippet.id
+              // Retry with PUT request
+              response = await fetch(`/api/snippets/${existingSnippet.id}`, {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+              })
+              if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${await response.text()}`)
+              }
+            }
+          }
+        } catch (retryError) {
+          console.error('Retry failed:', retryError)
+          throw new Error(`HTTP ${response.status}: ${errorText}`)
+        }
+      } else {
+        throw new Error(`HTTP ${response.status}: ${errorText}`)
+      }
     }
     
     const responseData = await response.json()
