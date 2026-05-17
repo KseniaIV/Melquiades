@@ -1149,23 +1149,26 @@ function buildList() {
   })
   updateMultiSelect()
   
-  // Update tags panel
-  updateTagsPanel(SNIPPETS[name].tags || [])
-  
-  // Update mindmap button for JSON snippets
-  const btnMindmap = $('btn-mindmap')
-  if (SNIPPETS[name].lang === 'json') {
-    btnMindmap.textContent = '📊 JSON Mind map'
-    btnMindmap.style.color = '#79c0ff'
-    btnMindmap.style.borderColor = '#79c0ff'
-  } else {
-    btnMindmap.textContent = 'Mind map'
-    btnMindmap.style.color = ''
-    btnMindmap.style.borderColor = ''
+  // Update UI for currently selected snippet
+  if (state.current && SNIPPETS[state.current]) {
+    // Update tags panel
+    updateTagsPanel(SNIPPETS[state.current].tags || [])
+    
+    // Update mindmap button for JSON snippets
+    const btnMindmap = $('btn-mindmap')
+    if (SNIPPETS[state.current].lang === 'json') {
+      btnMindmap.textContent = '📊 JSON Mind map'
+      btnMindmap.style.color = '#79c0ff'
+      btnMindmap.style.borderColor = '#79c0ff'
+    } else {
+      btnMindmap.textContent = 'Mind map'
+      btnMindmap.style.color = ''
+      btnMindmap.style.borderColor = ''
+    }
+    
+    SNIPPETS[state.current].lang === 'prompt' ? switchTab('prompt') : switchTab('snippet')
+    setChain([state.current])
   }
-  
-  SNIPPETS[name].lang === 'prompt' ? switchTab('prompt') : switchTab('snippet')
-  setChain([name])
 }
 
 function updateTagsPanel(tags) {
