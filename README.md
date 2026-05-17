@@ -27,14 +27,13 @@ Melquíades is an experimental local workbench that stores tiny named code/promp
 .
 ├── main.go              # HTTP server + route wiring
 ├── schema.sql           # PostgreSQL schema (snippets, tags, dependencies)
-├── demo-panel.html      # Single-page UI
+├── index.html      # Single-page UI
 ├── internal/
 │   ├── db/              # PostgreSQL store
 │   ├── handlers/        # snippets, exec, ai, characters
 │   └── models/
-├── demos/               # Example snippets
-├── misc/                # Notes and supporting docs
-└── test/                # Test fixtures
+├── js/                 # Helper functions
+├── css/                # Styles
 ```
 
 ## API
