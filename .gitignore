@@ -36,3 +36,7 @@ Thumbs.db
 
 misc/
 
+
+# build artifacts
+melquiades.exe
+*.exe
