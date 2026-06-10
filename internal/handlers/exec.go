@@ -54,4 +54,58 @@ func Exec(store *db.Store) http.HandlerFunc {
 			http.Error(w, "snippet lacks the exec:system capability", http.StatusForbidden)
 			return
 		}
-		if slices.Contains(sn.Capab
+		if slices.Contains(sn.Capabilities, "exec:confirm") && !req.Confirm {
+			http.Error(w, "snippet requires confirmation: re-send with \"confirm\": true", http.StatusConflict)
+			return
+		}
+
+		command := sn.Body
+		if req.Shell != "" {
+			command = req.Shell
+		}
+		if command == "" {
+			http.Error(w, "nothing to execute", http.StatusBadRequest)
+			return
+		}
+
+		flush, ok := w.(http.Flusher)
+		if !ok {
+			http.Error(w, "streaming not supported", http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.Header().Set("Cache-Control", "no-cache")
+		w.Header().Set("Connection", "keep-alive")
+
+		pr, pw, err := os.Pipe()
+		if err != nil {
+			fmt.Fprintf(w, "data: error: %s\n\n", err)
+			flush.Flush()
+			return
+		}
+
+		cmd := exec.CommandContext(r.Context(), "bash", "-c", command)
+		cmd.Stdout = pw
+		cmd.Stderr = pw
+
+		if err := cmd.Start(); err != nil {
+			pw.Close()
+			pr.Close()
+			fmt.Fprintf(w, "data: error: %s\n\n", err)
+			flush.Flush()
+			return
+		}
+		pw.Close()
+
+		scanner := bufio.NewScanner(pr)
+		for scanner.Scan() {
+			fmt.Fprintf(w, "data: %s\n\n", scanner.Text())
+			flush.Flush()
+		}
+		pr.Close()
+		cmd.Wait()
+
+		fmt.Fprintf(w, "data: [done]\n\n")
+		flush.Flush()
+	}
+}

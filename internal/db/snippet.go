@@ -124,4 +124,17 @@ func (s *Store) UpdateSnippet(id int, name, language, body, status string, capab
 		UPDATE snippets
 		SET name=$2, language=$3, body=$4, status=$5, capabilities=$6, version=version+1
 		WHERE id=$1
-		
+		RETURNING id, name, language, body, version, status, capabilities, created_at, updated_at`,
+		id, name, language, body, status, pq.Array(capabilities),
+	).Scan(
+		&sn.ID, &sn.Name, &sn.Language, &sn.Body,
+		&sn.Version, &sn.Status, pq.Array(&sn.Capabilities),
+		&sn.CreatedAt, &sn.UpdatedAt,
+	)
+	return &sn, err
+}
+
+func (s *Store) DeleteSnippet(id int) error {
+	_, err := s.DB.Exec(`DELETE FROM snippets WHERE id=$1`, id)
+	return err
+}

@@ -56,4 +56,58 @@ You can stop at any step. Nothing is forced into a full system. AI is there to h
 | Method  | Path                  | Purpose                                          |
 |---------|-----------------------|--------------------------------------------------|
 | `GET/POST` | `/api/snippets`    | List / create snippets                           |
-| `GET/PUT/DELETE` | `/api/snippets/{id}` | Read / update / 
+| `GET/PUT/DELETE` | `/api/snippets/{id}` | Read / update / delete a snippet         |
+| `POST`  | `/api/exec`           | Execute a stored snippet on the host shell (disabled by default — see Security) |
+| `POST`  | `/api/ai/generate`    | Generate a snippet from a prompt (SSE stream)    |
+| `POST`  | `/api/ai/decompose`   | Break an intent into smaller snippet steps       |
+| `POST`  | `/api/ai/mindmap`     | Produce a mind map over a snippet                |
+| `GET/POST` | `/api/characters`  | List / switch character personas                 |
+| `GET`   | `/`                   | Serves the panel UI (`index.html`)               |
+
+## Security
+
+The server binds to `127.0.0.1:8092` only, rejects non-loopback `Host` headers (DNS rebinding), and sets no CORS headers — the UI is same-origin, nothing else gets in.
+
+Host shell execution (`/api/exec`) is **off by default**. To use it:
+
+1. Start the server with `MELQUIADES_ENABLE_EXEC=1`.
+2. The request must name a stored snippet carrying the `exec:system` capability.
+3. If the snippet also carries `exec:confirm`, the request must include `"confirm": true`.
+
+Browser-language snippets (HTML/CSS/JS) always run inside a sandboxed iframe and never touch the host.
+
+## Getting started
+
+### Prerequisites
+
+- Go 1.24+
+- PostgreSQL (the schema assumes a database called `melquiades`)
+
+### 1. Create the database
+
+```bash
+createdb melquiades
+psql -d melquiades -f schema.sql
+```
+
+### 2. Set the connection string
+
+```bash
+export DATABASE_URL="postgres://postgres:postgres@localhost:5432/melquiades?sslmode=disable"
+```
+
+### 3. Run the server
+
+```bash
+go run .
+```
+
+Then open <http://localhost:8092>.
+
+## Status
+
+This is a personal exploration project — expect rough edges, opinionated defaults, and occasional rewrites. It's primarily a place for me to think out loud in code.
+
+## License
+
+MIT

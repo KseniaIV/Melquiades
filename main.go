@@ -54,4 +54,17 @@ func main() {
 	mux.Handle("/api/ai/mindmap", handlers.MindMap())
 	mux.Handle("/api/characters", handlers.Characters())
 
-	fs := http.FileServer(htt
+	fs := http.FileServer(http.Dir("."))
+	mux.Handle("/", fs)
+
+	log.Println("listening on http://localhost:8092")
+
+	// Bind to loopback only: the UI is served same-origin by this server,
+	// so no CORS headers are needed and no external interface is exposed.
+	log.Fatal(
+		http.ListenAndServe(
+			"127.0.0.1:8092",
+			localhostOnly(mux),
+		),
+	)
+}
