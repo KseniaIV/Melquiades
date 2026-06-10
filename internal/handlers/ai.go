@@ -320,7 +320,6 @@ func Generate() http.HandlerFunc {
 		w.Header().Set("Content-Type", "text/event-stream")
 		w.Header().Set("Cache-Control", "no-cache")
 		w.Header().Set("Connection", "keep-alive")
-		w.Header().Set("Access-Control-Allow-Origin", "*")
 
 		scanner := bufio.NewScanner(resp.Body)
 		for scanner.Scan() {
@@ -333,3 +332,4 @@ func Generate() http.HandlerFunc {
 		flush.Flush()
 	}
 }
+                                                      

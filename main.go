@@ -2,27 +2,33 @@ package main
 
 import (
 	"log"
+	"net"
 	"net/http"
 	"os"
+	"strings"
 
 	"melquiades/internal/db"
 	"melquiades/internal/handlers"
 )
 
-func withCORS(next http.Handler) http.Handler {
+// localhostOnly rejects requests whose Host header is not a loopback name.
+// Combined with binding to 127.0.0.1, this blocks DNS-rebinding attacks
+// (a malicious site pointing its own domain at 127.0.0.1).
+func localhostOnly(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusNoContent)
+		host := r.Host
+		if h, _, err := net.SplitHostPort(r.Host); err == nil {
+			host = h
+		}
+		host = strings.ToLower(strings.Trim(host, "[]"))
+		if host != "localhost" && host != "127.0.0.1" && host != "::1" {
+			http.Error(w, "forbidden host", http.StatusForbidden)
 			return
 		}
-
 		next.ServeHTTP(w, r)
 	})
 }
+
 func main() {
 	dsn := os.Getenv("DATABASE_URL")
 
@@ -42,21 +48,10 @@ func main() {
 
 	mux.Handle("/api/snippets", handlers.Snippets(store))
 	mux.Handle("/api/snippets/", handlers.SnippetByID(store))
-	mux.Handle("/api/exec", handlers.Exec())
+	mux.Handle("/api/exec", handlers.Exec(store))
 	mux.Handle("/api/ai/generate", handlers.Generate())
 	mux.Handle("/api/ai/decompose", handlers.Decompose())
 	mux.Handle("/api/ai/mindmap", handlers.MindMap())
 	mux.Handle("/api/characters", handlers.Characters())
 
-	fs := http.FileServer(http.Dir("."))
-	mux.Handle("/", fs)
-
-	log.Println("listening on http://localhost:8092")
-
-	log.Fatal(
-		http.ListenAndServe(
-			":8092",
-			withCORS(mux),
-		),
-	)
-}
+	fs := http.FileServer(htt
