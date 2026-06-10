@@ -4,83 +4,56 @@
 
 ![Melquíades panel](./screenshot.png)
 
-Melquíades is an experimental local workbench that stores tiny named code/prompt snippets in PostgreSQL (or your DB of choice potentially) and lets you compose, chain, and run them from a single-page UI. It also wires in a few LLM-backed actions (generate, decompose, mindmap, reflect) for working through ideas while you build.
+Melquíades is a local workbench that stores tiny named code/prompt snippets in PostgreSQL and lets you compose, chain, and run them from a single-page UI. It wires in LLM-backed actions (generate, decompose, mind map, revise, explain, reflect) for working through ideas while you build.
+
+## Why
+
+Everything is a snippet. A snippet can be code, a prompt, a small panel, or a step in a chain. Snippets are small on purpose. A typical flow:
+
+- write a note or a prompt
+- break it down (manually or with AI)
+- generate a few small snippets
+- edit them until they make sense
+- run them in the sandbox
+- connect them into a chain
+- optionally register one as a live panel
+
+You can stop at any step. Nothing is forced into a full system. AI is there to help you think, break things down, and suggest directions — while you stay close enough to understand every piece so you can reuse it later. It is optional: everything stays visible and editable.
 
 ## What it does
 
-- **Snippet library** — Store small units of `js`, `css`, `html`, `markdown`, `json`, `yaml`, `bash`, `sql`, `go`, `python`, `dockerfile`, `kubernetes`, or `prompt` content. Each snippet has a status (`draft` / `ready` / `archived`), capabilities (e.g. `exec:browser`, `exec:confirm`), tags, and dependencies on other snippets.
-- **Chains** — Combine multiple snippets into a single executable unit. HTML / CSS / JS are merged and run in the browser panel.
-- **Run panel** — A small UI to view, execute, and watch the log of chain runs.
-- **AI actions** — Generate, debug, revise, and explain snippets. Decompose intents into smaller snippet plans. Build a mindmap of related snippets.
-- **Reflection** — Track failure modes and open questions next to each chain.
+- **Snippet library** — Small units of `js`, `css`, `html`, `markdown`, `json`, `yaml`, `bash`, `sql`, `go`, `python`, `dockerfile`, `kubernetes`, `mermaid`, `chain`, or `prompt` content. Each snippet has a status (`draft` / `ready` / `archived`), capabilities (e.g. `exec:system`, `exec:confirm`), tags, and dependencies on other snippets.
+- **Chains** — A snippet of language `chain` lists other snippets by name, one per line. HTML / CSS / JS members are combined into a single document and run in the sandbox; missing members are auto-generated from the chain's context. A snippet named `startup-chain` runs at boot.
+- **Run panel** — Execute snippets in a sandboxed iframe, watch the log, register snippets as live panels.
+- **AI actions** — Generate (streamed over SSE), decompose an intent into smaller steps, build a mind map of a snippet (JSON snippets are mapped structurally without a model call), revise, explain, reflect.
+- **Characters** — AI personas loaded from an Oobabooga `characters/` directory; see `misc/README-CHARACTERS.md`.
 
 ## Stack
 
-- **Backend:** Go (`net/http`, standard library)
-- **Database:** PostgreSQL
-- **Frontend:** Single static page (`demo-panel.html`), no build step
-- **LLM:** Local model endpoint (Mistral-7B in the screenshot, configurable)
+- **Backend:** Go (`net/http`, standard library), PostgreSQL via `lib/pq`
+- **Frontend:** Single static page, vanilla JS in six plain modules (`js/state|ui|editor|run|ai|main.js`) — no build step
+- **LLM:** Local model behind an OpenAI-compatible endpoint (`http://localhost:5000/v1/chat/completions`, e.g. Oobabooga; Mistral-7B in the screenshot)
 
 ## Project layout
 
 ```
 .
-├── main.go              # HTTP server + route wiring
+├── main.go              # HTTP server + route wiring (loopback only)
 ├── schema.sql           # PostgreSQL schema (snippets, tags, dependencies)
-├── index.html      # Single-page UI
+├── index.html           # Single-page UI
 ├── internal/
 │   ├── db/              # PostgreSQL store
 │   ├── handlers/        # snippets, exec, ai, characters
-│   └── models/
-├── js/                 # Helper functions
-├── css/                # Styles
+│   └── models/          # character config
+├── js/                  # Frontend modules (load order: state → ui → editor → run → ai → main)
+├── css/                 # Styles
+├── test/                # Handler tests (need a live PostgreSQL)
+└── misc/                # Prototypes, demos, notes
 ```
 
 ## API
 
-| Method  | Path                  | Purpose                                       |
-|---------|-----------------------|-----------------------------------------------|
-| `*`     | `/api/snippets`       | List / create snippets                        |
-| `*`     | `/api/snippets/{id}`  | Read / update / delete a snippet              |
-| `POST`  | `/api/exec`           | Execute a snippet or chain                    |
-| `POST`  | `/api/ai/generate`    | Generate a new snippet from a prompt          |
-| `POST`  | `/api/ai/decompose`   | Break an intent into smaller snippet steps    |
-| `POST`  | `/api/ai/mindmap`     | Produce a mindmap over related snippets       |
-| `*`     | `/api/characters`     | Load supporting "character" personas          |
-| `GET`   | `/`                   | Redirects to `/demo-panel.html`               |
-
-## Getting started
-
-### Prerequisites
-
-- Go 1.21+
-- PostgreSQL (the schema assumes a database called `melquiades`)
-
-### 1. Create the database
-
-```bash
-createdb melquiades
-psql -d melquiades -f schema.sql
-```
-
-### 2. Set the connection string
-
-```bash
-export DATABASE_URL="postgres://postgres:postgres@localhost:5432/melquiades?sslmode=disable"
-```
-
-### 3. Run the server
-
-```bash
-go run .
-```
-
-Then open <http://localhost:8091>. You'll be redirected to the panel UI.
-
-## Status
-
-This is a personal exploration project — expect rough edges, opinionated defaults, and occasional rewrites. It's primarily a place for me to think out loud in code.
-
-## License
-
-MIT
+| Method  | Path                  | Purpose                                          |
+|---------|-----------------------|--------------------------------------------------|
+| `GET/POST` | `/api/snippets`    | List / create snippets                           |
+| `GET/PUT/DELETE` | `/api/snippets/{id}` | Read / update / 
