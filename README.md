@@ -115,7 +115,14 @@ All seeds live in `sql/` and are idempotent. Docker applies them automatically o
 Get-Content sql\seed-imagination.sql | docker exec -i melquiades-db psql -U melquiades -d melquiades
 ```
 
-`seed.sql` holds the starter snippets, `seed-imagination.sql` the demo chains (macondo-rain, orbit-clock, star-notes), and `seed-myths.sql` the model-assisted star-myths chain.
+`seed.sql` holds the starter snippets, `seed-imagination.sql` the demo chains (macondo-rain, orbit-clock, star-notes), `seed-myths.sql` and `seed-symbols.sql` the model-assisted chains, and `seed-deploy.sql` the **deploy board** — a panel whose buttons run real host commands (`docker ps`, snippet-DB status, its own git history, a confirm-gated database backup). It needs the server started with:
+
+```powershell
+$env:MELQUIADES_ENABLE_EXEC = "1"
+go run .
+```
+
+Commands are stored snippets carrying `exec:system`; the backup also carries `exec:confirm`, and the confirmation dialog is owned by the app, not the panel.
 
 ### Run
 

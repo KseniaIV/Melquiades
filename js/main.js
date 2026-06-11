@@ -105,3 +105,67 @@ window.addEventListener('message', async (e) => {
     appendLog(`[ai-bridge] error: ${err.message}`, 'error')
   }
 })
+
+// ── Shell bridge ─────────────────────────────────────────────────
+// Panels request host commands as {type:'shell', id, name}. The name
+// must be a stored snippet with the exec:system capability — the server
+// enforces that. Confirmation for exec:confirm snippets is owned HERE,
+// by the trusted parent: the sandboxed panel cannot self-approve, it can
+// only ask. Every line of output is mirrored into the run log.
+window.addEventListener('message', async (e) => {
+  const msg = e.data
+  if (msg?.type !== 'shell') return
+
+  const ours = [...document.querySelectorAll('iframe')].map(f => f.contentWindow)
+  if (!ours.includes(e.source)) return
+
+  const name = String(msg.name || '')
+  if (!name) return
+  const send = (m) => e.source.postMessage(m, '*')
+  appendLog(`[shell-bridge] panel requests: ${name}`, 'action')
+
+  const call = (confirmFlag) => fetch('/api/exec', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, confirm: confirmFlag }),
+  })
+
+  try {
+    let resp = await call(false)
+    if (resp.status === 409) {
+      if (!confirm(`"${name}" is confirmation-gated (exec:confirm).\nRun it on the host shell?`)) {
+        send({ type: 'shell-error', id: msg.id, error: 'cancelled at the gate' })
+        appendLog(`[shell-bridge] ${name} cancelled`, 'action')
+        return
+      }
+      resp = await call(true)
+    }
+    if (!resp.ok) throw new Error((await resp.text()).trim() || `HTTP ${resp.status}`)
+
+    const reader = resp.body.getReader()
+    const dec = new TextDecoder()
+    let buf = ''
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buf += dec.decode(value, { stream: true })
+      const lines = buf.split('\n')
+      buf = lines.pop()
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue
+        const payload = line.slice(6)
+        if (payload === '[done]') {
+          send({ type: 'shell-done', id: msg.id })
+          appendLog(`[shell-bridge] ${name} finished`, 'action')
+          return
+        }
+        send({ type: 'shell-line', id: msg.id, line: payload })
+        appendLog(`[${name}] ${payload}`, 'output')
+      }
+    }
+    send({ type: 'shell-done', id: msg.id })
+  } catch (err) {
+    send({ type: 'shell-error', id: msg.id, error: String(err.message || err) })
+    appendLog(`[shell-bridge] ${name}: ${err.message}`, 'error')
+  }
+})
