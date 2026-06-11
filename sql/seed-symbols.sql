@@ -1,19 +1,18 @@
 -- symbol-atlas: draw a symbol point by point; the loaded model reads it
--- and offers a short interpretive paragraph on its resemblances and the
--- history of symbols like it. Output is explicitly labeled as the model's
--- interpretation, not established lore — nothing here pretends to be a
--- real constellation or a real tradition.
+-- and offers a short interpretive paragraph, labeled as interpretation.
+-- Upsert: re-running this file UPDATES existing snippet bodies.
 
 INSERT INTO snippets (name, language, body, status) VALUES
 ('symbol-stage', 'html', '<div class="atlas">
   <canvas id="vellum"></canvas>
-  <div id="atlas-hint">click to place points \u2014 close the shape by clicking near your first point</div>
+  <div id="atlas-hint">click to place points — close the shape by clicking near your first point</div>
   <div id="atlas-bar">
-    <input id="symbol-label" placeholder="call it\u2026 (optional)" spellcheck="false">
+    <input id="symbol-label" placeholder="call it… (optional)" spellcheck="false">
     <button id="read-symbol">read this symbol</button>
+    <button id="clear-symbol" title="start over">↺</button>
   </div>
   <p id="symbol-note"></p>
-  <p id="atlas-credit">interpretation by the local model \u2014 not established lore</p>
+  <p id="atlas-credit">interpretation by the local model — not established lore</p>
 </div>', 'ready'),
 ('symbol-skin', 'css', 'body{margin:0;overflow:hidden;background:radial-gradient(ellipse at 50% 40%,#161320 0%,#0b0a12 75%)}
 .atlas{position:relative;width:100vw;height:100vh}
@@ -23,12 +22,15 @@ INSERT INTO snippets (name, language, body, status) VALUES
 #atlas-bar{position:absolute;top:48px;left:50%;transform:translateX(-50%);display:flex;gap:8px}
 #symbol-label{background:rgba(20,16,34,.7);border:1px solid #463d63;border-radius:14px;
   color:#cfc4e8;padding:6px 14px;font:12px Georgia,serif;outline:none;width:170px;text-align:center}
-#read-symbol{background:rgba(20,16,34,.7);border:1px solid #6b5a35;border-radius:14px;
+#read-symbol,#clear-symbol{background:rgba(20,16,34,.7);border:1px solid #6b5a35;border-radius:14px;
   color:#d9b96a;padding:6px 16px;cursor:pointer;font:12px Georgia,serif;letter-spacing:.14em}
+#clear-symbol{border-color:#463d63;color:#9a8db5;padding:6px 11px}
 #read-symbol:disabled{opacity:.4}
-#symbol-note{position:absolute;bottom:44px;left:50%;transform:translateX(-50%);width:70%;
-  font:italic 15px Georgia,serif;color:#d9c89a;text-align:center;line-height:1.7;
-  text-shadow:0 1px 10px #000;min-height:3em;margin:0}
+#symbol-note{position:absolute;bottom:42px;left:50%;transform:translateX(-50%);width:62%;
+  max-height:30vh;overflow-y:auto;font:italic 14px Georgia,serif;color:#d9c89a;text-align:center;
+  line-height:1.7;margin:0;padding:10px 18px;background:rgba(11,10,18,.82);
+  border:1px solid rgba(217,185,106,.18);border-radius:10px;backdrop-filter:blur(2px)}
+#symbol-note:empty{display:none}
 #atlas-credit{position:absolute;bottom:14px;left:0;right:0;text-align:center;margin:0;
   font:10px Georgia,serif;color:#6a5f85;letter-spacing:.2em;text-transform:uppercase}', 'ready'),
 ('symbol-mind', 'js', 'const cv = document.getElementById("vellum"), cx = cv.getContext("2d")
@@ -38,7 +40,7 @@ fit(); addEventListener("resize", fit)
 
 // Draw a symbol: each point connects to the previous; clicking near the
 // first point closes the figure.
-const pts = []
+let pts = []
 let closed = false
 
 cv.addEventListener("click", e => {
@@ -71,17 +73,21 @@ const btn = document.getElementById("read-symbol")
 const label = document.getElementById("symbol-label")
 let reqId = 0
 
+document.getElementById("clear-symbol").addEventListener("click", () => {
+  pts = []; closed = false; note.textContent = ""; label.value = ""
+})
+
 btn.addEventListener("click", () => {
-  if (pts.length < 3){ note.textContent = "give it at least three points first\u2026"; return }
-  note.textContent = "\u2026"
+  if (pts.length < 3){ note.textContent = "give it at least three points first…"; return }
+  note.textContent = "…"
   btn.disabled = true
   const named = label.value.trim()
   parent.postMessage({
     type: "ai", id: ++reqId,
-    system: "You are a thoughtful historian of symbols and iconography. In one short paragraph (3-4 sentences), say what the described symbol most resembles and sketch the cultural history of symbols like it. Plain, warm prose. No lists, no preamble.",
+    system: "You are a historian of symbols. Reply in AT MOST three sentences and 60 words total. Say what the described symbol most resembles and one or two real traditions where similar marks appear. No lists, no preamble, no closing remarks. Stop after the third sentence.",
     prompt: "Someone hand-drew a symbol: " + describe() + "." +
       (named ? " They call it \"" + named + "\"." : "") +
-      " What does it resemble, and what is the history of such symbols?"
+      " What does it resemble, and where have such symbols appeared?"
   }, "*")
 })
 
@@ -117,7 +123,7 @@ requestAnimationFrame(tick)', 'ready'),
 ('symbol-atlas', 'chain', 'symbol-stage
 symbol-skin
 symbol-mind', 'ready')
-ON CONFLICT (name) DO NOTHING;
+ON CONFLICT (name) DO UPDATE SET body = EXCLUDED.body, language = EXCLUDED.language;
 
 INSERT INTO snippet_tags (snippet_id, tag_id)
 SELECT s.id, t.id FROM snippets s, tags t
