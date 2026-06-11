@@ -4,78 +4,114 @@
 
 ![Melquíades panel](./screenshot.png)
 
-Melquíades is an experimental local workbench that stores tiny named code/prompt snippets in PostgreSQL (or your DB of choice potentially) and lets you compose, chain, and run them from a single-page UI. It also wires in a few LLM-backed actions (generate, decompose, mindmap, reflect) for working through ideas while you build.
+Melquíades is a local workbench that stores tiny named code/prompt snippets in PostgreSQL and lets you compose, chain, and run them from a single-page UI. It wires in LLM-backed actions (generate, decompose, mind map, revise, explain, reflect) for working through ideas while you build.
+
+## Why
+
+Everything is a snippet. A snippet can be code, a prompt, a small panel, or a step in a chain. Snippets are small on purpose. A typical flow:
+
+- write a note or a prompt
+- break it down (manually or with AI)
+- generate a few small snippets
+- edit them until they make sense
+- run them in the sandbox
+- connect them into a chain
+- optionally register one as a live panel
+
+You can stop at any step. Nothing is forced into a full system. AI is there to help you think, break things down, and suggest directions — while you stay close enough to understand every piece so you can reuse it later. It is optional: everything stays visible and editable.
 
 ## What it does
 
-- **Snippet library** — Store small units of `js`, `css`, `html`, `markdown`, `json`, `yaml`, `bash`, `sql`, `go`, `python`, `dockerfile`, `kubernetes`, or `prompt` content. Each snippet has a status (`draft` / `ready` / `archived`), capabilities (e.g. `exec:browser`, `exec:confirm`), tags, and dependencies on other snippets.
-- **Chains** — Combine multiple snippets into a single executable unit. HTML / CSS / JS are merged and run in the browser panel.
-- **Run panel** — A small UI to view, execute, and watch the log of chain runs.
-- **AI actions** — Generate, debug, revise, and explain snippets. Decompose intents into smaller snippet plans. Build a mindmap of related snippets.
-- **Reflection** — Track failure modes and open questions next to each chain.
+- **Snippet library** — Small units of `js`, `css`, `html`, `markdown`, `json`, `yaml`, `bash`, `sql`, `go`, `python`, `dockerfile`, `kubernetes`, `mermaid`, `chain`, or `prompt` content. Each snippet has a status (`draft` / `ready` / `archived`), capabilities (e.g. `exec:system`, `exec:confirm`), tags, and dependencies on other snippets.
+- **Chains** — A snippet of language `chain` lists other snippets by name, one per line. HTML / CSS / JS members are combined into a single document and run in the sandbox; missing members are auto-generated from the chain's context. A snippet named `startup-chain` runs at boot.
+- **Run panel** — Execute snippets in a sandboxed iframe, watch the log, register snippets as live panels.
+- **AI actions** — Generate (streamed over SSE), decompose an intent into smaller steps, build a mind map of a snippet (JSON snippets are mapped structurally without a model call), revise, explain, reflect.
+- **Characters** — AI personas loaded from an Oobabooga `characters/` directory; see `misc/README-CHARACTERS.md`.
 
 ## Stack
 
-- **Backend:** Go (`net/http`, standard library)
-- **Database:** PostgreSQL
-- **Frontend:** Single static page (`demo-panel.html`), no build step
-- **LLM:** Local model endpoint (Mistral-7B in the screenshot, configurable)
+- **Backend:** Go (`net/http`, standard library), PostgreSQL via `lib/pq`
+- **Frontend:** Single static page, vanilla JS in six plain modules (`js/state|ui|editor|run|ai|main.js`) — no build step
+- **LLM:** Local model behind an OpenAI-compatible endpoint (`http://localhost:5000/v1/chat/completions`, e.g. Oobabooga; Mistral-7B in the screenshot)
 
 ## Project layout
 
 ```
 .
-├── main.go              # HTTP server + route wiring
+├── main.go              # HTTP server + route wiring (loopback only)
 ├── schema.sql           # PostgreSQL schema (snippets, tags, dependencies)
-├── index.html      # Single-page UI
+├── index.html           # Single-page UI
 ├── internal/
 │   ├── db/              # PostgreSQL store
 │   ├── handlers/        # snippets, exec, ai, characters
-│   └── models/
-├── js/                 # Helper functions
-├── css/                # Styles
+│   └── models/          # character config
+├── js/                  # Frontend modules (load order: state → ui → editor → run → ai → main)
+├── css/                 # Styles
+├── test/                # Handler tests (need a live PostgreSQL)
+└── misc/                # Prototypes, demos, notes
 ```
 
 ## API
 
-| Method  | Path                  | Purpose                                       |
-|---------|-----------------------|-----------------------------------------------|
-| `*`     | `/api/snippets`       | List / create snippets                        |
-| `*`     | `/api/snippets/{id}`  | Read / update / delete a snippet              |
-| `POST`  | `/api/exec`           | Execute a snippet or chain                    |
-| `POST`  | `/api/ai/generate`    | Generate a new snippet from a prompt          |
-| `POST`  | `/api/ai/decompose`   | Break an intent into smaller snippet steps    |
-| `POST`  | `/api/ai/mindmap`     | Produce a mindmap over related snippets       |
-| `*`     | `/api/characters`     | Load supporting "character" personas          |
-| `GET`   | `/`                   | Redirects to `/demo-panel.html`               |
+| Method  | Path                  | Purpose                                          |
+|---------|-----------------------|--------------------------------------------------|
+| `GET/POST` | `/api/snippets`    | List / create snippets                           |
+| `GET/PUT/DELETE` | `/api/snippets/{id}` | Read / update / delete a snippet         |
+| `POST`  | `/api/exec`           | Execute a stored snippet on the host shell (disabled by default — see Security) |
+| `POST`  | `/api/ai/generate`    | Generate a snippet from a prompt (SSE stream)    |
+| `POST`  | `/api/ai/decompose`   | Break an intent into smaller snippet steps       |
+| `POST`  | `/api/ai/mindmap`     | Produce a mind map over a snippet                |
+| `GET/POST` | `/api/characters`  | List / switch character personas                 |
+| `GET`   | `/`                   | Serves the panel UI (`index.html`)               |
+
+## Security
+
+The server binds to `127.0.0.1:8092` only, rejects non-loopback `Host` headers (DNS rebinding), and sets no CORS headers — the UI is same-origin, nothing else gets in.
+
+Host shell execution (`/api/exec`) is **off by default**. To use it:
+
+1. Start the server with `MELQUIADES_ENABLE_EXEC=1`.
+2. The request must name a stored snippet carrying the `exec:system` capability.
+3. If the snippet also carries `exec:confirm`, the request must include `"confirm": true`.
+
+Browser-language snippets (HTML/CSS/JS) always run inside a sandboxed iframe and never touch the host.
 
 ## Getting started
 
 ### Prerequisites
 
-- Go 1.21+
-- PostgreSQL (the schema assumes a database called `melquiades`)
+- Go 1.24+
+- PostgreSQL — either Docker or a native install
 
-### 1. Create the database
+### Option A: Docker (recommended)
 
 ```bash
-createdb melquiades
-psql -d melquiades -f schema.sql
+docker compose up -d
 ```
 
-### 2. Set the connection string
+The container publishes on host port **55432** (not 5432) so it can never clash with a native PostgreSQL install. Schema and starter snippets are applied automatically on first start. Then:
 
-```bash
-export DATABASE_URL="postgres://postgres:postgres@localhost:5432/melquiades?sslmode=disable"
-```
-
-### 3. Run the server
-
-```bash
+```powershell
+$env:DATABASE_URL = "postgres://melquiades:melquiades@localhost:55432/melquiades?sslmode=disable"
 go run .
 ```
 
-Then open <http://localhost:8091>. You'll be redirected to the panel UI.
+To wipe and rebuild the database: `docker compose down -v && docker compose up -d`
+
+### Option B: Native PostgreSQL (Windows)
+
+```powershell
+.\setup.ps1            # defaults: port 5432, user postgres
+.\setup.ps1 -Port 5433  # if your Postgres listens elsewhere
+```
+
+The script creates the database, applies `schema.sql`, and seeds starter snippets — re-running it is safe. It prints the `DATABASE_URL` to set when it finishes.
+
+### Run
+
+Open <http://localhost:8092> after `go run .`. A fresh database boots into the `startup-chain` snippet; try executing `demo-chain` to see structure → styles → logic compose live.
+
+> **If snippets fail to load with HTTP 500:** the server connected to a database that's missing the tables — usually a `DATABASE_URL` pointing at the wrong port or database. The run log now shows the underlying Postgres error; re-run `setup.ps1` (or `docker compose up -d`) against the right instance.
 
 ## Status
 

@@ -1,11 +1,12 @@
--- Melquíades schema
--- Run once: psql -U postgres -p 5433 -d melquiades -f schema.sql
+-- Melquíades schema (idempotent — safe to re-run)
+-- Native:  psql -U postgres -d melquiades -f schema.sql
+-- Docker:  applied automatically on first start (see docker-compose.yml)
 
 CREATE TABLE IF NOT EXISTS snippets (
   id            SERIAL       PRIMARY KEY,
   name          TEXT         NOT NULL UNIQUE,
   language      VARCHAR(50)  NOT NULL DEFAULT 'js',
-  -- language: js|css|html|markdown|json|yaml|bash|sql|go|python|dockerfile|kubernetes|prompt
+  -- language: js|css|html|markdown|json|yaml|bash|sql|go|python|dockerfile|kubernetes|mermaid|chain|prompt
   body          TEXT         NOT NULL DEFAULT '',
   version       INTEGER      NOT NULL DEFAULT 1,
   status        VARCHAR(20)  NOT NULL DEFAULT 'draft',
