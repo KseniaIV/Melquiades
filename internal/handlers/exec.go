@@ -2,15 +2,38 @@ package handlers
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
 	"os/exec"
+	"runtime"
 	"slices"
 
 	"melquiades/internal/db"
 )
+
+// shellCommand picks the shell that runs snippet bodies.
+// On Windows, "bash" on PATH is usually the WSL relay (System32\bash.exe),
+// which fails with "execvpe(/bin/bash): No such file" unless a distro is
+// configured — so prefer Git Bash. Override with MELQUIADES_SHELL.
+func shellCommand(ctx context.Context, command string) *exec.Cmd {
+	if sh := os.Getenv("MELQUIADES_SHELL"); sh != "" {
+		return exec.CommandContext(ctx, sh, "-c", command)
+	}
+	if runtime.GOOS == "windows" {
+		for _, p := range []string{
+			`C:\Program Files\Git\bin\bash.exe`,
+			`C:\Program Files (x86)\Git\bin\bash.exe`,
+		} {
+			if _, err := os.Stat(p); err == nil {
+				return exec.CommandContext(ctx, p, "-c", command)
+			}
+		}
+	}
+	return exec.CommandContext(ctx, "bash", "-c", command)
+}
 
 type execRequest struct {
 	// Name of a stored snippet whose capabilities authorize this execution.
@@ -84,7 +107,7 @@ func Exec(store *db.Store) http.HandlerFunc {
 			return
 		}
 
-		cmd := exec.CommandContext(r.Context(), "bash", "-c", command)
+		cmd := shellCommand(r.Context(), command)
 		cmd.Stdout = pw
 		cmd.Stderr = pw
 
