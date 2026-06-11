@@ -89,10 +89,10 @@ Browser-language snippets (HTML/CSS/JS) always run inside a sandboxed iframe and
 docker compose up -d
 ```
 
-Schema and starter snippets are applied automatically on first start. Then:
+The container publishes on host port **55432** (not 5432) so it can never clash with a native PostgreSQL install. Schema and starter snippets are applied automatically on first start. Then:
 
 ```powershell
-$env:DATABASE_URL = "postgres://melquiades:melquiades@localhost:5432/melquiades?sslmode=disable"
+$env:DATABASE_URL = "postgres://melquiades:melquiades@localhost:55432/melquiades?sslmode=disable"
 go run .
 ```
 
