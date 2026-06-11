@@ -4,8 +4,8 @@
 
 INSERT INTO snippets (name, language, body, status) VALUES
 ('hello-world', 'html',
-'<div style="display:flex;height:90vh;align-items:center;justify-content:center;font-family:system-ui">
-  <h1 style="color:#7c83ff;font-weight:300;letter-spacing:.15em">Hello from Melquíades ✦</h1>
+'<div style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 45%,#15152a 0%,#0b0b16 70%);font-family:system-ui">
+  <h1 style="color:#9aa0ff;font-weight:300;letter-spacing:.18em;text-shadow:0 0 28px rgba(124,131,247,.45)">Hello from Melquíades ✦</h1>
 </div>', 'ready'),
 
 ('demo-structure', 'html',
