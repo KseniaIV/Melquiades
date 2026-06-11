@@ -8,11 +8,17 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"slices"
 
 	"melquiades/internal/db"
 )
+
+func fileExists(p string) bool {
+	_, err := os.Stat(p)
+	return err == nil
+}
 
 // shellCommand picks the shell that runs snippet bodies.
 // On Windows, "bash" on PATH is usually the WSL relay (System32\bash.exe),
@@ -23,11 +29,22 @@ func shellCommand(ctx context.Context, command string) *exec.Cmd {
 		return exec.CommandContext(ctx, sh, "-c", command)
 	}
 	if runtime.GOOS == "windows" {
+		// Derive Git Bash from git.exe's own location — works for any
+		// install directory (Program Files, scoop, portable, D:\...).
+		if gitPath, err := exec.LookPath("git"); err == nil {
+			root := filepath.Dir(filepath.Dir(gitPath)) // ...\Git\cmd\git.exe -> ...\Git
+			if cand := filepath.Join(root, "bin", "bash.exe"); fileExists(cand) {
+				return exec.CommandContext(ctx, cand, "-c", command)
+			}
+			if cand := filepath.Join(root, "usr", "bin", "bash.exe"); fileExists(cand) {
+				return exec.CommandContext(ctx, cand, "-c", command)
+			}
+		}
 		for _, p := range []string{
 			`C:\Program Files\Git\bin\bash.exe`,
 			`C:\Program Files (x86)\Git\bin\bash.exe`,
 		} {
-			if _, err := os.Stat(p); err == nil {
+			if fileExists(p) {
 				return exec.CommandContext(ctx, p, "-c", command)
 			}
 		}
