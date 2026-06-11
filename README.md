@@ -39,7 +39,7 @@ You can stop at any step. Nothing is forced into a full system. AI is there to h
 ```
 .
 ├── main.go              # HTTP server + route wiring (loopback only)
-├── schema.sql           # PostgreSQL schema (snippets, tags, dependencies)
+├── sql/                 # schema.sql + seed*.sql (applied in order on first start)
 ├── index.html           # Single-page UI
 ├── internal/
 │   ├── db/              # PostgreSQL store
@@ -105,7 +105,17 @@ To wipe and rebuild the database: `docker compose down -v && docker compose up -
 .\setup.ps1 -Port 5433  # if your Postgres listens elsewhere
 ```
 
-The script creates the database, applies `schema.sql`, and seeds starter snippets — re-running it is safe. It prints the `DATABASE_URL` to set when it finishes.
+The script creates the database, applies `sql/schema.sql`, and runs every `sql/seed*.sql` in order — re-running it is safe. It prints the `DATABASE_URL` to set when it finishes.
+
+### Demo content
+
+All seeds live in `sql/` and are idempotent. Docker applies them automatically on first start; on an existing database, load any of them manually:
+
+```powershell
+Get-Content sql\seed-imagination.sql | docker exec -i melquiades-db psql -U melquiades -d melquiades
+```
+
+`seed.sql` holds the starter snippets, `seed-imagination.sql` the demo chains (macondo-rain, orbit-clock, star-notes), and `seed-myths.sql` the model-assisted star-myths chain.
 
 ### Run
 
