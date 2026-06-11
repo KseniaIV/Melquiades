@@ -1,5 +1,5 @@
 -- Melquíades schema (idempotent — safe to re-run)
--- Native:  psql -U postgres -d melquiades -f schema.sql
+-- Native:  psql -U postgres -d melquiades -f sql/schema.sql
 -- Docker:  applied automatically on first start (see docker-compose.yml)
 
 CREATE TABLE IF NOT EXISTS snippets (

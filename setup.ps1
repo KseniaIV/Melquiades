@@ -22,10 +22,12 @@ if ($exists -ne "1") {
 }
 
 Write-Host "==> Applying schema..."
-& psql -U $User -p $Port -d $Db -v ON_ERROR_STOP=1 -f "$PSScriptRoot\schema.sql"
+& psql -U $User -p $Port -d $Db -v ON_ERROR_STOP=1 -f "$PSScriptRoot\sql\schema.sql"
 
-Write-Host "==> Seeding starter snippets..."
-& psql -U $User -p $Port -d $Db -v ON_ERROR_STOP=1 -f "$PSScriptRoot\seed.sql"
+Get-ChildItem "$PSScriptRoot\sql\seed*.sql" | Sort-Object Name | ForEach-Object {
+    Write-Host "==> Seeding $($_.Name)..."
+    & psql -U $User -p $Port -d $Db -v ON_ERROR_STOP=1 -f $_.FullName
+}
 
 $count = & psql -U $User -p $Port -d $Db -tAc "SELECT count(*) FROM snippets"
 Write-Host "==> Done. $count snippets in database."
