@@ -54,8 +54,14 @@ func main() {
 	mux.Handle("/api/ai/mindmap", handlers.MindMap())
 	mux.Handle("/api/characters", handlers.Characters())
 
+	// no-store: this is a local dev tool whose JS/CSS change often; without
+	// this, Go's 304/If-Modified-Since handling (keyed on file mtimes) can
+	// leave the browser running stale frontend code after an update.
 	fs := http.FileServer(http.Dir("."))
-	mux.Handle("/", fs)
+	mux.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-store")
+		fs.ServeHTTP(w, r)
+	}))
 
 	log.Println("listening on http://localhost:8092")
 
