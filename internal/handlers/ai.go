@@ -332,4 +332,3 @@ func Generate() http.HandlerFunc {
 		flush.Flush()
 	}
 }
-                                                      
