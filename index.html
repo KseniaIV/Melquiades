@@ -4,7 +4,13 @@
 <meta charset="UTF-8">
 <title>Melquíades — Demo</title>
 <link rel="stylesheet" href="/css/styles.css">
-<script  src="/js/app.js"></script>
+<!-- Plain scripts, load order matters: state → ui → editor → run → ai → main -->
+<script defer src="/js/state.js"></script>
+<script defer src="/js/ui.js"></script>
+<script defer src="/js/editor.js"></script>
+<script defer src="/js/run.js"></script>
+<script defer src="/js/ai.js"></script>
+<script defer src="/js/main.js"></script>
 </head>
 <body>
 
@@ -107,6 +113,7 @@
         <div class="ai-actions">
           <button class="btn btn-accent" onclick="generate()">Generate ▸</button>
           <button class="btn btn-plain"  onclick="debugCharacters()">Debug Chars ▸</button>
+          <button class="btn btn-plain"  onclick="decompose()">Decompose</button>
           <button class="btn btn-plain"  onclick="revise()">Revise</button>
           <button class="btn btn-plain"  onclick="explain()">Explain</button>
         </div>
@@ -152,7 +159,7 @@
 </main>
 
 <footer>
-  <div class="sidebar">
+  <!-- <div class="sidebar">
     <h2>Snippets</h2>
     <div id="registry-bar"></div>
     <div class="tree-controls">
@@ -162,7 +169,7 @@
     <div id="snippet-tree" class="snippet-tree"></div>
     <div id="snippets-list" class="snippets-list" style="display: none;"></div>
   </div>
-  <span id="registry-empty" style="font-size:11px;color:#333">— no registered snippets yet</span>
+  <span id="registry-empty" style="font-size:11px;color:#333">— no registered snippets yet</span> -->
 </footer>
 
 

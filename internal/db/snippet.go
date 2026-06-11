@@ -20,6 +20,22 @@ type Snippet struct {
 	UpdatedAt    time.Time `json:"updated_at"`
 }
 
+func (s *Store) GetSnippetByName(name string) (*Snippet, error) {
+	var sn Snippet
+	err := s.DB.QueryRow(`
+		SELECT id, name, language, body, version, status, capabilities, created_at, updated_at
+		FROM snippets WHERE name=$1`, name,
+	).Scan(
+		&sn.ID, &sn.Name, &sn.Language, &sn.Body,
+		&sn.Version, &sn.Status, pq.Array(&sn.Capabilities),
+		&sn.CreatedAt, &sn.UpdatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &sn, nil
+}
+
 func (s *Store) ListSnippets() ([]Snippet, error) {
 	rows, err := s.DB.Query(`
 		SELECT s.id, s.name, s.language, s.body, s.version, s.status, s.capabilities,
