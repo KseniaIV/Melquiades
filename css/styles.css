@@ -49,7 +49,10 @@ textarea { flex: 1; background: var(--bg2); border: none; color: var(--text); fo
 .actions { display: flex; gap: 6px; padding: 8px 12px; border-top: 1px solid var(--border); flex-shrink: 0; align-items: center; }
 
 /* run screen */
-#sandbox { flex: 1; border: none; background: #fff; min-height: 0; }
+/* Dark by default: a blank/cleared iframe is transparent, so this is what
+   shows through — white here made the run tab flash like a torch. Snippets
+   that want a light canvas can still set their own body background. */
+#sandbox { flex: 1; border: none; background: #0b0d14; min-height: 0; }
 .log-area { height: 130px; overflow-y: auto; background: #080810; border-top: 1px solid var(--border); padding: 6px 10px; font: 11px/1.6 'Cascadia Code','Fira Code',monospace; flex-shrink: 0; }
 .log-line        { color: #555; }
 .log-line.action { color: var(--teal); }
