@@ -81,28 +81,37 @@ Browser-language snippets (HTML/CSS/JS) always run inside a sandboxed iframe and
 ### Prerequisites
 
 - Go 1.24+
-- PostgreSQL (the schema assumes a database called `melquiades`)
+- PostgreSQL — either Docker or a native install
 
-### 1. Create the database
+### Option A: Docker (recommended)
 
 ```bash
-createdb melquiades
-psql -d melquiades -f schema.sql
+docker compose up -d
 ```
 
-### 2. Set the connection string
+Schema and starter snippets are applied automatically on first start. Then:
 
-```bash
-export DATABASE_URL="postgres://postgres:postgres@localhost:5432/melquiades?sslmode=disable"
-```
-
-### 3. Run the server
-
-```bash
+```powershell
+$env:DATABASE_URL = "postgres://melquiades:melquiades@localhost:5432/melquiades?sslmode=disable"
 go run .
 ```
 
-Then open <http://localhost:8092>.
+To wipe and rebuild the database: `docker compose down -v && docker compose up -d`
+
+### Option B: Native PostgreSQL (Windows)
+
+```powershell
+.\setup.ps1            # defaults: port 5432, user postgres
+.\setup.ps1 -Port 5433  # if your Postgres listens elsewhere
+```
+
+The script creates the database, applies `schema.sql`, and seeds starter snippets — re-running it is safe. It prints the `DATABASE_URL` to set when it finishes.
+
+### Run
+
+Open <http://localhost:8092> after `go run .`. A fresh database boots into the `startup-chain` snippet; try executing `demo-chain` to see structure → styles → logic compose live.
+
+> **If snippets fail to load with HTTP 500:** the server connected to a database that's missing the tables — usually a `DATABASE_URL` pointing at the wrong port or database. The run log now shows the underlying Postgres error; re-run `setup.ps1` (or `docker compose up -d`) against the right instance.
 
 ## Status
 

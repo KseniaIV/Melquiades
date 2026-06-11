@@ -272,7 +272,12 @@ async function loadFromDB() {
   appendLog('[db] Loading snippets from database…', 'action')
   try {
     const resp = await fetch('/api/snippets')
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${resp.statusText}`)
+    if (!resp.ok) {
+      // The body carries the real error (e.g. 'relation "snippets" does not
+      // exist' when the schema was never applied) — surface it, not just 500.
+      const detail = (await resp.text().catch(() => '')).trim()
+      throw new Error(`HTTP ${resp.status}: ${detail || resp.statusText}`)
+    }
     const snips = await resp.json()
     appendLog(`[db] ✓ Loaded ${snips.length} snippets from database`, 'action')
     snips.forEach(sn => {

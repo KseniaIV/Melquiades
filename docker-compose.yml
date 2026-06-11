@@ -1,0 +1,28 @@
+# Postgres for Melquíades — schema and seed applied automatically on first start.
+#   docker compose up -d
+#   $env:DATABASE_URL = "postgres://melquiades:melquiades@localhost:5432/melquiades?sslmode=disable"
+#   go run .
+#
+# To wipe and rebuild from scratch: docker compose down -v && docker compose up -d
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: melquiades-db
+    environment:
+      POSTGRES_USER: melquiades
+      POSTGRES_PASSWORD: melquiades
+      POSTGRES_DB: melquiades
+    ports:
+      - "5432:5432"
+    volumes:
+      - melquiades-data:/var/lib/postgresql/data
+      - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U melquiades -d melquiades"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  melquiades-data:
