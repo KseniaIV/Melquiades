@@ -1,5 +1,16 @@
 // ── Sandbox execution, chains, registered panels ─────────────────
 
+// Some Chromium builds don't (re)navigate a sandboxed iframe when srcdoc
+// is assigned over an existing document — the attribute updates but the
+// frame keeps showing the old (or blank) page. Clearing the attribute
+// first forces a fresh navigation every time. Verified live: plain
+// assignment left the frame on about:blank; remove-then-set rendered.
+function setFrameDoc(frame, html) {
+  if (!frame) return
+  frame.removeAttribute('srcdoc')
+  frame.srcdoc = html
+}
+
 function injectIntoHtml(base, tag, code) {
   if (tag === 'css') {
     const style = `<style>\n${code}\n</style>`
@@ -26,12 +37,12 @@ function runCode(code, lang, name) {
     if (lang === 'css') {
       if (state.lastHtml) {
         state.lastHtml = injectIntoHtml(state.lastHtml, 'css', code)
-        sandbox.srcdoc = state.lastHtml
+        setFrameDoc(sandbox, state.lastHtml)
         appendLog(`[execute] ${name} — CSS injected`, 'action')
       } else {
         const demo = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>\n${code}\n</style></head><body><h1>Heading</h1><h2>Subheading</h2><p>Paragraph text. <a href="#">A link</a>.</p><ul><li>Item one</li><li>Item two</li></ul><button>Button</button><input placeholder="Input"></body></html>`
         state.lastHtml = demo
-        sandbox.srcdoc = demo
+        setFrameDoc(sandbox, demo)
         appendLog(`[execute] ${name} — CSS preview`, 'action')
       }
     } else if (lang === 'js') {
@@ -43,16 +54,16 @@ function runCode(code, lang, name) {
         jsHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body><div id="widget"></div><script>\ntry {\n${code}\n} catch(e) {\n  console.error('JS Error:', e);\n  document.body.innerHTML += '<div style="color:red;padding:10px;border:1px solid red;margin:10px;">JS Error: ' + e.message + '</div>';\n}\n<\/script></body></html>`
         state.lastHtml = jsHtml
       }
-      sandbox.srcdoc = jsHtml
+      setFrameDoc(sandbox, jsHtml)
       appendLog(`[execute] ${name} — JS executed`, 'action')
     } else if (lang === 'mermaid') {
       const mermaidHtml = '<!DOCTYPE html><html><head><meta charset="UTF-8"><script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"><\/script><style>body{padding:20px;background:#f5f5f5}.mermaid{background:white;padding:20px;border-radius:8px}<\/style><\/head><body><div class="mermaid">' + code + '<\/div><script>mermaid.initialize({startOnLoad:true})<\/script><\/body><\/html>'
       state.lastHtml = mermaidHtml
-      sandbox.srcdoc = mermaidHtml
+      setFrameDoc(sandbox, mermaidHtml)
       appendLog('[execute] ' + name + ' — Mermaid diagram rendered', 'action')
     } else {
       state.lastHtml = isFullDoc ? code : srcdoc(code)
-      sandbox.srcdoc = state.lastHtml
+      setFrameDoc(sandbox, state.lastHtml)
       appendLog(`[execute] ${name} — done`, 'action')
     }
   })
@@ -147,11 +158,7 @@ async function executeChain(names, source) {
     const sandbox = $('sandbox')
     if (sandbox) {
       state.lastHtml = combinedContent
-      // Assign srcdoc on the next frame: setting it in the same tick as the
-      // tab switch can leave the just-unhidden iframe unpainted until a
-      // reflow (the 'blank until you click away and back' bug). runCode()
-      // uses the same pattern.
-      requestAnimationFrame(() => { sandbox.srcdoc = combinedContent })
+      requestAnimationFrame(() => setFrameDoc(sandbox, combinedContent))
     }
   }
 
@@ -165,7 +172,7 @@ async function executeChain(names, source) {
 function stop() {
   requestAnimationFrame(() => {
     const sandbox = $('sandbox')
-    sandbox.srcdoc = '<!DOCTYPE html><html><body></body></html>'
+    setFrameDoc(sandbox, '<!DOCTYPE html><html><body></body></html>')
     state.lastHtml = ''
     appendLog('[stop] sandbox cleared', 'action')
   })
@@ -198,7 +205,7 @@ function register() {
     card.innerHTML = `<div class="panel-card-hdr"><span>${name}</span><span class="x" onclick="removePanel('${name}')">✕</span></div><iframe id="pframe-${name}" sandbox="allow-scripts"></iframe>`
     area.appendChild(card)
   }
-  $(`pframe-${name}`).srcdoc = srcdoc(code)
+  setFrameDoc($(`pframe-${name}`), srcdoc(code))
   $(`dot-${name}`)?.classList.add('reg')
   state.registered[name] = code
   appendLog(`[register] ${name} registered as panel/tool`, 'action')
