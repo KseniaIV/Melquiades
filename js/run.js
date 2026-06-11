@@ -147,7 +147,11 @@ async function executeChain(names, source) {
     const sandbox = $('sandbox')
     if (sandbox) {
       state.lastHtml = combinedContent
-      sandbox.srcdoc = combinedContent
+      // Assign srcdoc on the next frame: setting it in the same tick as the
+      // tab switch can leave the just-unhidden iframe unpainted until a
+      // reflow (the 'blank until you click away and back' bug). runCode()
+      // uses the same pattern.
+      requestAnimationFrame(() => { sandbox.srcdoc = combinedContent })
     }
   }
 
