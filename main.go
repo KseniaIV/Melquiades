@@ -53,6 +53,7 @@ func main() {
 	mux.Handle("/api/ai/decompose", handlers.Decompose())
 	mux.Handle("/api/ai/mindmap", handlers.MindMap())
 	mux.Handle("/api/characters", handlers.Characters())
+	handlers.RegisterPM(mux, store)
 
 	// no-store: this is a local dev tool whose JS/CSS change often; without
 	// this, Go's 304/If-Modified-Since handling (keyed on file mtimes) can

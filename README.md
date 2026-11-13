@@ -64,6 +64,27 @@ You can stop at any step. Nothing is forced into a full system. AI is there to h
 | `GET/POST` | `/api/characters`  | List / switch character personas                 |
 | `GET`   | `/`                   | Serves the panel UI (`index.html`)               |
 
+### Project management API
+
+Projects, tasks, experiments and notes, with an automatic activity history (`sql/schema-pm.sql`).
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| `GET` / `POST` | `/api/{projects,tasks,experiments,notes}` | List (filter with `?field=value`, `?limit=`) / create |
+| `GET` / `PATCH` / `DELETE` | `/api/{projects,tasks,experiments,notes}/{id}` | Read / partial update (`PUT` also accepted) / delete |
+| `GET` | `/api/activity` | Change history, newest first (`?project_id=`, `entity_type=`, `entity_id=`, `actor=`) |
+
+- Send `X-Melquiades-Actor: <name>` (e.g. `owner`, `assistant`, `script`) on writes; it is recorded in the activity log. Default: `api`.
+- Tasks take `"depends_on": [task ids]`; cycles are rejected. Setting `status` to `done` sets `completed_at`.
+- Statuses — projects: `active|paused|done|archived`; tasks: `todo|doing|blocked|done|cancelled`; experiments: `planned|running|verified|failed|partial`. Task `priority`: 0 urgent … 3 low.
+- Existing databases: `psql "$DATABASE_URL" -f sql/schema-pm.sql` (idempotent). Tests: `MELQUIADES_TEST_DATABASE_URL=… go test ./test/...`.
+
+```bash
+curl -s -X POST localhost:8092/api/projects -H 'X-Melquiades-Actor: owner' \
+  -d '{"slug":"demo","name":"Demo project"}'
+curl -s 'localhost:8092/api/tasks?project_id=1&status=todo'
+```
+
 ## Security
 
 The server binds to `127.0.0.1:8092` only, rejects non-loopback `Host` headers (DNS rebinding), and sets no CORS headers — the UI is same-origin, nothing else gets in.
